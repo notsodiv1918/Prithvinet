@@ -1,21 +1,25 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import TopBar from '@/components/TopBar';
+import PageShell from '@/components/PageShell';
+import { useAuth } from '@/lib/useAuth';
 import { INDUSTRIES, PRESCRIBED_LIMITS, MONTHLY_REPORTS } from '@/data/mockData';
-import { WATER_STATIONS, WATER_LIMITS, NOISE_STATIONS } from '@/data/waterNoiseData';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { WATER_STATIONS, WATER_LIMITS, WATER_TREND, NOISE_STATIONS, NOISE_TREND } from '@/data/waterNoiseData';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
 import toast, { Toaster } from 'react-hot-toast';
-import { getUser } from '@/lib/auth';
 
 type Portal = 'air' | 'water' | 'noise' | null;
-const key = (email: string) => `pvportal_${email}`;
+const pkey = (email: string) => `pvportal_${email}`;
+const IND      = INDUSTRIES[0];
+const MY_WATER = WATER_STATIONS.find(s => s.id === 'WTR002')!;
+const MY_NOISE = NOISE_STATIONS.find(s => s.id === 'NSE003')!;
+const PORTAL_META = {
+  air:   { label:'Air Quality',   accent:'#1a6b3a', icon:'💨' },
+  water: { label:'Water Quality', accent:'#1a5280', icon:'💧' },
+  noise: { label:'Noise Levels',  accent:'#5a3500', icon:'🔊' },
+} as const;
 
-const IND = INDUSTRIES[0];
-const MY_WATER = WATER_STATIONS.find(s => s.id === 'WTR002')!; // Nag River Nagpur
-const MY_NOISE = NOISE_STATIONS.find(s => s.id === 'NSE003')!; // Butibori MIDC Nagpur
-
+// ── AIR ───────────────────────────────────────────────────────────────────────
 function AirSection({ router }: { router: any }) {
   const [liveAqi, setLiveAqi] = useState(267);
   const [liveSo2, setLiveSo2] = useState(IND.currentSo2);
@@ -28,76 +32,77 @@ function AirSection({ router }: { router: any }) {
   }, []);
 
   return (
-    <div>
-      {liveAqi > 200 && (
-        <div style={{background:'#fdf0ee',border:'1px solid #f5c6cb',borderLeft:'4px solid #c0392b',borderRadius:'4px',padding:'0.75rem 1rem',marginBottom:'1.25rem',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      {liveAqi>200&&(
+        <div className="alert-critical" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:'0.82rem',fontWeight:'700',color:'#721c24'}}>⚠ AQI Breach — {liveAqi} (Limit: 100)</div>
-            <div style={{fontSize:'0.72rem',color:'#721c24',marginTop:'0.1rem'}}>Submit a compliance report to avoid inspection notice.</div>
+            <strong style={{fontSize:'0.82rem',color:'#721c24'}}>⚠ AQI Breach — Current: {liveAqi} (Limit: 100)</strong>
+            <div style={{fontSize:'0.72rem',color:'#721c24',marginTop:'0.2rem'}}>Sustained breach may trigger inspection. Submit compliance report immediately.</div>
           </div>
-          <button className="btn-danger" style={{fontSize:'0.75rem',whiteSpace:'nowrap',marginLeft:'1rem'}} onClick={()=>router.push('/submit')}>Submit Report</button>
+          <button className="btn-danger" style={{flexShrink:0,marginLeft:'1rem'}} onClick={()=>router.push('/submit')}>Submit Report</button>
         </div>
       )}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1rem',marginBottom:'1.25rem'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1rem'}}>
         {[
-          {label:'Live AQI', value:liveAqi, color:liveAqi>200?'#c0392b':'#d4680a'},
-          {label:'SO₂ (ppm)', value:liveSo2, color:liveSo2>PRESCRIBED_LIMITS.so2?'#c0392b':'#1a6b3a'},
-          {label:'Compliance', value:`${IND.complianceRate}%`, color:IND.complianceRate<50?'#c0392b':'#d4680a'},
-          {label:'Next Report Due', value:'17 days', color:'#1a4e8a', onClick:()=>router.push('/submit')},
-        ].map(s => (
-          <div key={s.label} className="stat-card" style={{borderTopColor:s.color,cursor:(s as any).onClick?'pointer':'default'}} onClick={(s as any).onClick}>
-            <div style={{fontSize:'0.65rem',color:'#6b8c7a',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:'0.3rem'}}>{s.label}</div>
-            <div style={{fontSize:'1.7rem',fontWeight:'800',color:s.color,lineHeight:1}}>{s.value}</div>
+          {label:'Live AQI',value:liveAqi,color:liveAqi>200?'#c0392b':'#856404'},
+          {label:'SO₂ ppm',value:liveSo2,color:liveSo2>PRESCRIBED_LIMITS.so2?'#c0392b':'#1a6b3a'},
+          {label:'Compliance Rate',value:`${IND.complianceRate}%`,color:IND.complianceRate<50?'#c0392b':'#856404'},
+          {label:'Next Report Due',value:'17 days',color:'#1a4e8a'},
+        ].map(s=>(
+          <div key={s.label} className="stat-card" style={{borderTopColor:s.color}}>
+            <div style={{fontSize:'0.63rem',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:'0.3rem',fontFamily:'Arial'}}>{s.label}</div>
+            <div style={{fontSize:'1.9rem',fontWeight:'800',color:s.color,lineHeight:1,fontFamily:'Georgia'}}>{s.value}</div>
           </div>
         ))}
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'1.25rem',marginBottom:'1.25rem'}}>
+      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'1.25rem'}}>
         <div className="section-card">
-          <div className="section-title">7-Day Emissions Trend</div>
+          <div className="section-title">📈 7-Day Emissions Trend</div>
           <ResponsiveContainer width="100%" height={190}>
             <LineChart data={IND.history.map(h=>({date:h.date,SO2:h.so2,NO2:h.no2}))} margin={{top:5,right:10,bottom:5,left:-10}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e8f5ee"/>
-              <XAxis dataKey="date" tick={{fill:'#6b8c7a',fontSize:10}}/>
-              <YAxis tick={{fill:'#6b8c7a',fontSize:11}}/>
-              <Tooltip contentStyle={{background:'white',border:'1px solid #c8e0d2',fontSize:'12px'}}/>
-              <ReferenceLine y={PRESCRIBED_LIMITS.so2} stroke="#c0392b" strokeDasharray="4 4" label={{value:'SO₂ limit',fill:'#c0392b',fontSize:9}}/>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8eef8"/>
+              <XAxis dataKey="date" tick={{fill:'var(--text-muted)',fontSize:10,fontFamily:'Arial'}}/>
+              <YAxis tick={{fill:'var(--text-muted)',fontSize:10}}/>
+              <Tooltip contentStyle={{background:'white',border:'1px solid var(--border)',fontSize:'12px',fontFamily:'Arial'}}/>
+              <ReferenceLine y={PRESCRIBED_LIMITS.so2} stroke="#c0392b" strokeDasharray="4 4" label={{value:'SO₂ Limit',fill:'#c0392b',fontSize:9}}/>
               <Line type="monotone" dataKey="SO2" stroke="#c0392b" strokeWidth={2} dot={{r:3}} name="SO₂"/>
               <Line type="monotone" dataKey="NO2" stroke="#d4680a" strokeWidth={2} dot={{r:3}} name="NO₂"/>
             </LineChart>
           </ResponsiveContainer>
         </div>
         <div className="section-card">
-          <div className="section-title">vs Prescribed Limits</div>
-          {[['SO₂',liveSo2,PRESCRIBED_LIMITS.so2,'ppm'],['NO₂',IND.currentNo2,PRESCRIBED_LIMITS.no2,'ppm'],['PM2.5',IND.currentPm25,PRESCRIBED_LIMITS.pm25,'µg/m³']].map(([k,v,lim,u])=>{
-            const over=Number(v)>Number(lim);
-            return (<div key={String(k)} style={{marginBottom:'0.75rem'}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:'0.2rem'}}>
-                <span style={{fontSize:'0.75rem',fontWeight:'600'}}>{k}</span>
-                <span style={{fontSize:'0.75rem',fontWeight:'700',color:over?'#c0392b':'#1a6b3a'}}>{v}/{lim} {u}</span>
+          <div className="section-title">⚖️ vs Prescribed Limits</div>
+          {([['SO₂',liveSo2,PRESCRIBED_LIMITS.so2,'ppm'],['NO₂',IND.currentNo2,PRESCRIBED_LIMITS.no2,'ppm'],['PM2.5',IND.currentPm25,PRESCRIBED_LIMITS.pm25,'µg/m³']] as [string,number,number,string][]).map(([k,v,lim,u])=>{
+            const over=v>lim;
+            return (<div key={k} style={{marginBottom:'0.85rem'}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:'0.25rem'}}>
+                <span style={{fontSize:'0.78rem',fontWeight:'600',fontFamily:'Arial'}}>{k}</span>
+                <span style={{fontSize:'0.75rem',fontWeight:'800',fontFamily:'Georgia',color:over?'#c0392b':'#1a6b3a'}}>{v}/{lim} {u}</span>
               </div>
-              <div style={{background:'#e8f5ee',borderRadius:'3px',height:'7px'}}>
-                <div style={{height:'100%',width:`${Math.min(100,Math.round(Number(v)/Number(lim)*100))}%`,background:over?'#c0392b':'#1a6b3a',borderRadius:'3px'}}/>
+              <div style={{background:'#e8eef8',borderRadius:'3px',height:'8px'}}>
+                <div style={{height:'100%',width:`${Math.min(100,Math.round(v/lim*100))}%`,background:over?'#c0392b':'#1a6b3a',borderRadius:'3px'}}/>
               </div>
             </div>);
           })}
         </div>
       </div>
-      {MONTHLY_REPORTS && MONTHLY_REPORTS.length > 0 && (
+      {MONTHLY_REPORTS?.length>0&&(
         <div className="section-card">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.75rem'}}>
-            <div className="section-title" style={{marginBottom:0}}>Recent Monthly Reports</div>
-            <button className="btn-outline" style={{fontSize:'0.72rem',padding:'0.25rem 0.75rem'}} onClick={()=>router.push('/industry-reports')}>View All →</button>
+            <div className="section-title" style={{marginBottom:0}}>📋 Monthly Report History</div>
+            <button className="btn-outline" style={{fontSize:'0.72rem',padding:'0.28rem 0.75rem'}} onClick={()=>router.push('/industry-reports')}>View All →</button>
           </div>
           <table className="gov-table">
-            <thead><tr><th>Month</th><th>Avg SO₂</th><th>Avg NO₂</th><th>Status</th><th>Submitted</th></tr></thead>
+            <thead><tr><th>Month</th><th>Avg SO₂</th><th>Avg NO₂</th><th>Avg PM2.5</th><th>Status</th><th>Submitted</th></tr></thead>
             <tbody>
               {MONTHLY_REPORTS.slice(0,4).map(r=>(
                 <tr key={r.id}>
                   <td style={{fontWeight:'600'}}>{r.month} {r.year}</td>
-                  <td style={{color:r.so2Avg>PRESCRIBED_LIMITS.so2?'#c0392b':'#1a2e22',fontWeight:r.so2Avg>PRESCRIBED_LIMITS.so2?'700':'400'}}>{r.so2Avg}</td>
-                  <td>{r.no2Avg}</td>
+                  <td style={{color:r.so2Avg>PRESCRIBED_LIMITS.so2?'#c0392b':'var(--text-dark)',fontWeight:r.so2Avg>PRESCRIBED_LIMITS.so2?'700':'400'}}>{r.so2Avg}</td>
+                  <td style={{color:r.no2Avg>PRESCRIBED_LIMITS.no2?'#c0392b':'var(--text-dark)'}}>{r.no2Avg}</td>
+                  <td style={{color:r.pm25Avg>PRESCRIBED_LIMITS.pm25?'#c0392b':'var(--text-dark)'}}>{r.pm25Avg}</td>
                   <td><span className={r.status==='Compliant'?'badge-compliant':'badge-noncompliant'}>{r.status}</span></td>
-                  <td style={{color:'#6b8c7a',fontSize:'0.75rem'}}>{r.submittedOn}</td>
+                  <td style={{color:'var(--text-muted)',fontSize:'0.75rem'}}>{r.submittedOn}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,160 +113,170 @@ function AirSection({ router }: { router: any }) {
   );
 }
 
-function WaterSection() {
+// ── WATER ─────────────────────────────────────────────────────────────────────
+function WaterSection({ router }: { router: any }) {
   const qC=(q:string)=>q==='Good'?'#1a6b3a':q==='Moderate'?'#856404':q==='Poor'?'#c0550a':'#c0392b';
   const isCrit=MY_WATER.quality==='Critical'||MY_WATER.quality==='Poor';
+
   return (
-    <div>
-      <div style={{background:isCrit?'#fdf0ee':'#f0f5ff',border:`1px solid ${isCrit?'#f5c6cb':'#c8d8f0'}`,borderLeft:`5px solid ${isCrit?'#c0392b':'#1a5280'}`,borderRadius:'4px',padding:'0.85rem 1.2rem',marginBottom:'1.25rem'}}>
-        <div style={{fontSize:'0.85rem',fontWeight:'700',color:isCrit?'#721c24':'#1a2e4a',marginBottom:'0.2rem'}}>{isCrit?'⚠':'📍'} Nearest Water Body: {MY_WATER.name}</div>
-        <div style={{fontSize:'0.75rem',color:isCrit?'#721c24':'#3d5a6a',lineHeight:1.8}}>
-          Status: <strong style={{color:qC(MY_WATER.quality)}}>{MY_WATER.quality}</strong> · DO: {MY_WATER.do} mg/L (Min: {WATER_LIMITS.do.min}) · BOD: {MY_WATER.bod} mg/L (Max: {WATER_LIMITS.bod.max}) · Trend: {MY_WATER.trend}
-          {isCrit && ' · Your facility effluent discharge may be contributing. Submit a water quality report.'}
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div className={isCrit?'alert-critical':'alert-info'}>
+        <strong style={{fontSize:'0.82rem',color:isCrit?'#721c24':'#1a2e4a'}}>{isCrit?'⚠':'📍'} Nearest Water Body: {MY_WATER.name}</strong>
+        <div style={{fontSize:'0.75rem',color:isCrit?'#721c24':'#3d5a6a',marginTop:'0.2rem',lineHeight:1.7}}>
+          Quality: <strong style={{color:qC(MY_WATER.quality)}}>{MY_WATER.quality}</strong> · DO: {MY_WATER.do} mg/L · BOD: {MY_WATER.bod} mg/L · TDS: {MY_WATER.tds} mg/L · Trend: {MY_WATER.trend}
+          {isCrit&&' — Effluent discharge monitoring required. Submit water quality report immediately.'}
         </div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.75rem',marginBottom:'1.25rem'}}>
-        {([
-          ['pH', MY_WATER.ph, `${WATER_LIMITS.ph.min}–${WATER_LIMITS.ph.max}`, MY_WATER.ph<WATER_LIMITS.ph.min||MY_WATER.ph>WATER_LIMITS.ph.max],
-          ['DO mg/L', MY_WATER.do, `>${WATER_LIMITS.do.min}`, MY_WATER.do<WATER_LIMITS.do.min],
-          ['BOD mg/L', MY_WATER.bod, `<${WATER_LIMITS.bod.max}`, MY_WATER.bod>WATER_LIMITS.bod.max],
-          ['TDS mg/L', MY_WATER.tds, `<${WATER_LIMITS.tds.max}`, MY_WATER.tds>WATER_LIMITS.tds.max],
-        ] as [string,number,string,boolean][]).map(([k,v,lim,bad])=>(
-          <div key={k} style={{background:bad?'#fdf0ee':'#f7f9ff',border:`1px solid ${bad?'#f5c6cb':'#c8d8f0'}`,borderRadius:'4px',padding:'0.75rem',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.85rem'}}>
+        {([['pH',MY_WATER.ph,`${WATER_LIMITS.ph.min}–${WATER_LIMITS.ph.max}`,MY_WATER.ph<WATER_LIMITS.ph.min||MY_WATER.ph>WATER_LIMITS.ph.max],
+           ['DO mg/L',MY_WATER.do,`>${WATER_LIMITS.do.min}`,MY_WATER.do<WATER_LIMITS.do.min],
+           ['BOD mg/L',MY_WATER.bod,`<${WATER_LIMITS.bod.max}`,MY_WATER.bod>WATER_LIMITS.bod.max],
+           ['TDS mg/L',MY_WATER.tds,`<${WATER_LIMITS.tds.max}`,MY_WATER.tds>WATER_LIMITS.tds.max]] as [string,number,string,boolean][]).map(([k,v,lim,bad])=>(
+          <div key={k} className="stat-card" style={{borderTopColor:bad?'#c0392b':'#1a6b3a',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.85rem 1.1rem'}}>
             <div>
-              <div style={{fontSize:'0.68rem',color:'#6b8c7a'}}>{k}</div>
-              <div style={{fontSize:'1.3rem',fontWeight:'800',color:bad?'#c0392b':'#1a5280'}}>{v}</div>
+              <div style={{fontSize:'0.65rem',color:'var(--text-muted)',fontFamily:'Arial',marginBottom:'0.2rem'}}>{k}</div>
+              <div style={{fontSize:'1.6rem',fontWeight:'800',color:bad?'#c0392b':'#1a5280',fontFamily:'Georgia'}}>{v}</div>
             </div>
             <div style={{textAlign:'right'}}>
-              <div style={{fontSize:'0.6rem',color:'#94a3b8'}}>Normal range</div>
-              <div style={{fontSize:'0.75rem',color:'#6b8c7a'}}>{lim}</div>
-              {bad && <div style={{fontSize:'0.62rem',color:'#c0392b',fontWeight:'700',marginTop:'0.1rem'}}>⚠ Out of range</div>}
+              <div style={{fontSize:'0.62rem',color:'var(--text-muted)',fontFamily:'Arial'}}>Normal: {lim}</div>
+              {bad&&<div style={{fontSize:'0.68rem',color:'#c0392b',fontWeight:'700',marginTop:'0.2rem',fontFamily:'Arial'}}>⚠ Out of range</div>}
             </div>
           </div>
         ))}
       </div>
-      <div style={{background:'white',border:'1px solid #c8d8f0',borderRadius:'4px',padding:'1rem',fontSize:'0.78rem',color:'#2a4a6a',lineHeight:1.8}}>
-        <strong style={{color:'#1a5280'}}>📋 Reporting Obligation:</strong> Under the Water (Prevention and Control of Pollution) Act 1974, industries must submit monthly effluent quality reports. Failure to comply may lead to suspension of Consent to Operate.
+      <div className="section-card">
+        <div className="section-title">📈 Water Quality Trend — {MY_WATER.body}</div>
+        <ResponsiveContainer width="100%" height={180}>
+          <LineChart data={WATER_TREND} margin={{top:5,right:10,bottom:5,left:-10}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e8eef8"/>
+            <XAxis dataKey="month" tick={{fill:'var(--text-muted)',fontSize:10,fontFamily:'Arial'}}/>
+            <YAxis tick={{fill:'var(--text-muted)',fontSize:10}}/>
+            <Tooltip contentStyle={{background:'white',border:'1px solid var(--border)',fontSize:'12px',fontFamily:'Arial'}}/>
+            <Legend wrapperStyle={{fontSize:'11px',fontFamily:'Arial'}}/>
+            <ReferenceLine y={6} stroke="#1a6b3a" strokeDasharray="4 4" label={{value:'DO Min',fill:'#1a6b3a',fontSize:9}}/>
+            <ReferenceLine y={3} stroke="#c0392b" strokeDasharray="4 4" label={{value:'BOD Max',fill:'#c0392b',fontSize:9}}/>
+            <Line type="monotone" dataKey="do"  stroke="#1a5280" strokeWidth={2} name="DO mg/L" dot={{r:3}}/>
+            <Line type="monotone" dataKey="bod" stroke="#c0392b" strokeWidth={2} name="BOD mg/L" dot={{r:3}}/>
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="section-card" style={{borderLeft:'4px solid #1a5280',background:'#f0f5ff'}}>
+        <div className="section-title" style={{color:'#1a5280'}}>📋 Water Quality Reporting Obligation</div>
+        <p style={{fontSize:'0.78rem',color:'var(--text-mid)',fontFamily:'Arial',lineHeight:1.8}}>Under the <strong>Water (Prevention and Control of Pollution) Act, 1974</strong>, industries discharging effluents are required to submit monthly water quality reports. Non-compliance may result in <strong>suspension of Consent to Operate</strong>. Reports are due by the last working day of each month.</p>
+        <button className="btn-primary" style={{marginTop:'0.75rem',fontSize:'0.75rem'}} onClick={()=>router.push('/submit')}>Submit Water Quality Report</button>
       </div>
     </div>
   );
 }
 
-function NoiseSection() {
-  const dayB=MY_NOISE.dayLevel>MY_NOISE.dayLimit;
-  const nightB=MY_NOISE.nightLevel>MY_NOISE.nightLimit;
+// ── NOISE ─────────────────────────────────────────────────────────────────────
+function NoiseSection({ router }: { router: any }) {
+  const dayB   = MY_NOISE.dayLevel   > MY_NOISE.dayLimit;
+  const nightB = MY_NOISE.nightLevel > MY_NOISE.nightLimit;
+
   return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.75rem',marginBottom:'1.25rem'}}>
-        {[
-          ['Day Level',MY_NOISE.dayLevel,MY_NOISE.dayLimit,dayB,'dB(A)'],
-          ['Night Level',MY_NOISE.nightLevel,MY_NOISE.nightLimit,nightB,'dB(A)'],
-        ].map(([k,v,lim,bad,u])=>(
-          <div key={String(k)} style={{background:bad?'#fdf0ee':'#fdf8f0',border:`1px solid ${bad?'#f5c6cb':'#e8d8c0'}`,borderTop:`3px solid ${bad?'#c0392b':'#1a6b3a'}`,borderRadius:'4px',padding:'1rem',textAlign:'center'}}>
-            <div style={{fontSize:'0.68rem',color:'#6b5a3a',marginBottom:'0.3rem',textTransform:'uppercase',letterSpacing:'0.06em'}}>{k}</div>
-            <div style={{fontSize:'2rem',fontWeight:'800',color:bad?'#c0392b':'#1a6b3a'}}>{v} <span style={{fontSize:'0.75rem',fontWeight:400,color:'#94a3b8'}}>{u}</span></div>
-            <div style={{fontSize:'0.68rem',color:'#6b5a3a',marginTop:'0.25rem'}}>Limit: {lim} {u}</div>
-            {bad && <div style={{fontSize:'0.7rem',color:'#c0392b',fontWeight:'700',marginTop:'0.15rem'}}>+{Number(v)-Number(lim)} dB over limit</div>}
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      {(dayB||nightB)&&(
+        <div className="alert-critical">
+          <strong style={{fontSize:'0.82rem',color:'#721c24'}}>⚠ Noise Limit Exceeded at your facility zone</strong>
+          <div style={{fontSize:'0.72rem',color:'#721c24',marginTop:'0.2rem'}}>Day: {MY_NOISE.dayLevel}/{MY_NOISE.dayLimit} dB(A) · Night: {MY_NOISE.nightLevel}/{MY_NOISE.nightLimit} dB(A) — Submit monthly noise report immediately.</div>
+        </div>
+      )}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+        {([['Day Level',MY_NOISE.dayLevel,MY_NOISE.dayLimit,dayB],['Night Level',MY_NOISE.nightLevel,MY_NOISE.nightLimit,nightB]] as [string,number,number,boolean][]).map(([k,v,lim,bad])=>(
+          <div key={k} className="stat-card" style={{borderTopColor:bad?'#c0392b':'#1a6b3a',textAlign:'center',padding:'1.25rem'}}>
+            <div style={{fontSize:'0.65rem',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.07em',fontFamily:'Arial',marginBottom:'0.4rem'}}>{k}</div>
+            <div style={{fontSize:'2.5rem',fontWeight:'800',color:bad?'#c0392b':'#1a6b3a',fontFamily:'Georgia'}}>{v} <span style={{fontSize:'0.9rem',fontWeight:400,color:'var(--text-muted)'}}>dB(A)</span></div>
+            <div style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginTop:'0.3rem'}}>Limit: {lim} dB(A)</div>
+            {bad&&<div style={{fontSize:'0.72rem',color:'#c0392b',fontWeight:'700',marginTop:'0.3rem',fontFamily:'Arial'}}>+{v-lim} dB over limit</div>}
           </div>
         ))}
       </div>
-      <div style={{background:'white',border:'1px solid #e8d8c0',borderRadius:'4px',padding:'1rem',fontSize:'0.78rem',color:'#4a3a1a',lineHeight:1.8}}>
-        <div style={{fontWeight:'700',color:'#5a3500',marginBottom:'0.3rem'}}>🏭 Industrial Zone Noise Limits (Noise Pollution Rules, 2000)</div>
-        Day: <strong>75 dB(A)</strong> · Night: <strong>70 dB(A)</strong> — your facility is currently
-        <strong style={{color:dayB||nightB?'#c0392b':'#1a6b3a',marginLeft:'0.3rem'}}>{dayB||nightB?'exceeding':'within'} prescribed limits</strong>.
-        Monthly noise level reports must be submitted to Regional Officer Rajesh Kumar.
+      <div className="section-card">
+        <div className="section-title">📈 24-Hour Noise Pattern — {MY_NOISE.zone} Zone</div>
+        <div style={{fontSize:'0.68rem',color:'var(--text-muted)',fontFamily:'Arial',marginBottom:'0.75rem'}}>Typical daily noise pattern. Industrial zone day limit: {MY_NOISE.dayLimit} dB(A)</div>
+        <ResponsiveContainer width="100%" height={175}>
+          <AreaChart data={NOISE_TREND} margin={{top:5,right:10,bottom:5,left:-10}}>
+            <defs>
+              <linearGradient id="myNoiseGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#5a3500" stopOpacity={0.15}/>
+                <stop offset="95%" stopColor="#5a3500" stopOpacity={0.02}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e8eef8"/>
+            <XAxis dataKey="time" tick={{fill:'var(--text-muted)',fontSize:10,fontFamily:'Arial'}}/>
+            <YAxis tick={{fill:'var(--text-muted)',fontSize:10}} domain={[35,85]}/>
+            <Tooltip contentStyle={{background:'white',border:'1px solid var(--border)',fontSize:'12px',fontFamily:'Arial'}}/>
+            <ReferenceLine y={MY_NOISE.dayLimit} stroke="#c0392b" strokeDasharray="4 4" label={{value:`Day Limit (${MY_NOISE.dayLimit})`,fill:'#c0392b',fontSize:9}}/>
+            <Area type="monotone" dataKey="level" stroke="#5a3500" strokeWidth={2} fill="url(#myNoiseGrad)" name="Noise dB(A)"/>
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="section-card" style={{borderLeft:'4px solid #5a3500',background:'#fffbf5'}}>
+        <div className="section-title" style={{color:'#5a3500'}}>📋 Noise Reporting Obligation — Industrial Zone</div>
+        <p style={{fontSize:'0.78rem',color:'var(--text-mid)',fontFamily:'Arial',lineHeight:1.8}}>Under <strong>Noise Pollution (Regulation and Control) Rules, 2000</strong>, Industrial zone limits are <strong>{MY_NOISE.dayLimit} dB(A) Day / {MY_NOISE.nightLimit} dB(A) Night</strong>. Monthly noise measurement reports must be submitted to your Regional Officer. Persistent violations attract penalties under Section 15 of the Environment (Protection) Act, 1986.</p>
+        <button className="btn-primary" style={{marginTop:'0.75rem',fontSize:'0.75rem'}} onClick={()=>router.push('/submit')}>Submit Noise Report</button>
       </div>
     </div>
   );
 }
 
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function IndustryDashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, mounted } = useAuth({ allowedRoles:['Industry User'] });
   const [portal, setPortal] = useState<Portal>(null);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u) { router.push('/'); return; }
-    setUser(u);
-    const saved = localStorage.getItem(key(u.email)) as Portal | null;
+    if (!user) return;
+    const saved = localStorage.getItem(pkey(user.email)) as Portal|null;
     if (saved) setPortal(saved);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    const h = (e: Event) => setPortal((e as CustomEvent).detail as Portal);
+    const h = (e:Event) => setPortal((e as CustomEvent).detail as Portal);
     window.addEventListener('pvPortalChange', h);
     return () => window.removeEventListener('pvPortalChange', h);
   }, []);
 
-  const handleSelectPortal = (p: Portal) => {
-    setPortal(p);
-    if (user) localStorage.setItem(key(user.email), p as string);
-    window.dispatchEvent(new CustomEvent('pvPortalChange', { detail: p }));
-  };
-
-  if (!user) return null;
-
-  const PORTALS = [
-    { k:'air' as const,   icon:'💨', label:'Air Quality',   desc:'AQI · SO₂ · PM2.5 emissions compliance', accent:'#1a6b3a', bg:'#f0f8f3', border:'#c8e0d2', stat:`${IND.complianceRate}% compliant`,       statColor:IND.complianceRate<50?'#c0392b':'#d4680a' },
-    { k:'water' as const, icon:'💧', label:'Water Quality', desc:'Effluent · Nearby water body monitoring',  accent:'#1a5280', bg:'#f0f5ff', border:'#c8d8f0', stat:`${MY_WATER.quality} — Nag River`,       statColor:MY_WATER.quality==='Critical'?'#c0392b':'#856404' },
-    { k:'noise' as const, icon:'🔊', label:'Noise Levels',  desc:'Day & night dB(A) · Industrial zone limits', accent:'#5a3500', bg:'#fff8ee', border:'#f0d8a0', stat:`Day: ${MY_NOISE.dayLevel}/${MY_NOISE.dayLimit} dB`, statColor:MY_NOISE.dayLevel>MY_NOISE.dayLimit?'#c0392b':'#1a6b3a' },
-  ];
+  const activeP = portal ? PORTAL_META[portal] : null;
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh', background:'#f0f8f3' }}>
-      <Sidebar />
-      <main style={{ flex:1, overflow:'auto' }}>
-        <TopBar title={`Industry Dashboard — ${portal ? PORTALS.find(p=>p.k===portal)?.label : 'Select Domain'}`} subtitle="Bharat Steel Works, Nagpur — Environmental Compliance Portal"/>
-        <Toaster position="top-right"/>
-        <div style={{ background:'white', borderBottom:'1px solid #e8f5ee', padding:'0.5rem 1.5rem' }}>
-          <span style={{ fontSize:'0.7rem', color:'#6b8c7a' }}>Home › </span>
-          <span style={{ fontSize:'0.7rem', color:'#1a6b3a', fontWeight:'600' }}>My Dashboard{portal ? ` › ${PORTALS.find(p=>p.k===portal)?.label}` : ''}</span>
+    <PageShell loading={!mounted||!user}>
+      <Toaster position="top-right" toastOptions={{style:{background:'white',color:'var(--text-dark)',border:'1px solid var(--border)',fontFamily:'Arial',fontSize:'0.82rem'}}}/>
+      <div className="breadcrumb">
+        <span>🏠 Home</span><span>›</span>
+        <a onClick={()=>router.push('/industry-dashboard')}>My Dashboard</a>
+        {portal&&<><span>›</span><span style={{color:activeP?.accent,fontWeight:'700'}}>{activeP?.icon} {activeP?.label}</span></>}
+      </div>
+      <div className="live-bar">
+        <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
+          <span className="live-dot"/>
+          <span style={{fontSize:'0.72rem',fontWeight:'700',color:'#22c55e',fontFamily:'Arial',letterSpacing:'0.05em'}}>LIVE DATA</span>
+          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginLeft:'0.5rem'}}>Bharat Steel Works, Nagpur · Industry Compliance Portal</span>
         </div>
-        <div style={{ padding:'1.25rem 1.5rem' }}>
-
-          {/* Portal selector cards */}
-          <div style={{ marginBottom:'1.5rem' }}>
-            <div style={{ fontSize:'0.68rem', fontWeight:'700', color:'#3d5a48', textTransform:'uppercase', letterSpacing:'0.09em', marginBottom:'0.85rem' }}>Select Monitoring Domain</div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1rem' }}>
-              {PORTALS.map(p => {
-                const isActive = portal === p.k;
-                return (
-                  <button key={p.k} onClick={() => handleSelectPortal(p.k)}
-                    style={{ display:'flex', alignItems:'center', gap:'0.9rem', padding:'1rem 1.1rem', background:isActive?p.bg:'white', border:`2px solid ${isActive?p.accent:p.border}`, borderRadius:'8px', cursor:'pointer', textAlign:'left', transition:'all 0.15s', boxShadow:isActive?'0 3px 14px rgba(0,0,0,0.1)':'0 1px 4px rgba(0,0,0,0.05)' }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = p.accent; }}
-                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = p.border; }}>
-                    <span style={{ fontSize:'2rem', flexShrink:0 }}>{p.icon}</span>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:'0.88rem', fontWeight:'700', color:isActive?p.accent:'#1a2e22', marginBottom:'0.15rem', display:'flex', alignItems:'center', gap:'0.4rem' }}>
-                        {p.label}
-                        {isActive && <span style={{ fontSize:'0.58rem', background:p.accent, color:'white', padding:'1px 5px', borderRadius:'8px' }}>Active</span>}
-                      </div>
-                      <div style={{ fontSize:'0.63rem', color:'#6b8c7a', lineHeight:1.5 }}>{p.desc}</div>
-                    </div>
-                    <div style={{ textAlign:'right', flexShrink:0 }}>
-                      <div style={{ fontSize:'0.78rem', fontWeight:'800', color:p.statColor }}>{p.stat}</div>
-                    </div>
-                  </button>
-                );
-              })}
+        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial'}}>Industry User Portal</div>
+      </div>
+      <div className="main-content">
+        {!portal?(
+          <div className="empty-domain">
+            <div style={{fontSize:'3.5rem',marginBottom:'1.25rem'}}>🌿</div>
+            <div style={{fontSize:'1.1rem',fontWeight:'700',color:'var(--navy)',marginBottom:'0.5rem',fontFamily:'Georgia'}}>Select a Monitoring Domain</div>
+            <div style={{fontSize:'0.82rem',color:'var(--text-muted)',fontFamily:'Arial',maxWidth:'360px',margin:'0 auto',lineHeight:1.7}}>Choose Air Quality, Water Quality, or Noise Levels from the left panel to view your compliance data and submit reports.</div>
+            <div style={{display:'flex',gap:'1rem',justifyContent:'center',marginTop:'2rem'}}>
+              {(['air','water','noise'] as const).map(p=>(
+                <button key={p} onClick={()=>{setPortal(p);if(user)localStorage.setItem(pkey(user.email),p);window.dispatchEvent(new CustomEvent('pvPortalChange',{detail:p}));}}
+                  style={{background:'white',border:`2px solid ${PORTAL_META[p].accent}`,color:PORTAL_META[p].accent,borderRadius:'4px',padding:'0.6rem 1.25rem',fontSize:'0.82rem',fontFamily:'Arial',fontWeight:'700',cursor:'pointer'}}>
+                  {PORTAL_META[p].icon} {PORTAL_META[p].label}
+                </button>
+              ))}
             </div>
           </div>
-
-          {/* Domain content */}
-          {!portal && (
-            <div style={{ background:'white', border:'2px dashed #c8e0d2', borderRadius:'8px', padding:'4rem 2rem', textAlign:'center' }}>
-              <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>☝️</div>
-              <div style={{ fontSize:'1rem', fontWeight:'700', color:'#3d5a48', marginBottom:'0.5rem' }}>Choose a domain above to view your compliance data</div>
-              <div style={{ fontSize:'0.8rem', color:'#6b8c7a' }}>Air Quality, Water Quality, or Noise Levels</div>
-            </div>
-          )}
-          {portal === 'air'   && <AirSection router={router} />}
-          {portal === 'water' && <WaterSection />}
-          {portal === 'noise' && <NoiseSection />}
-
-        </div>
-      </main>
-    </div>
+        ):portal==='air'?<AirSection router={router}/>
+          :portal==='water'?<WaterSection router={router}/>
+          :<NoiseSection router={router}/>
+        }
+      </div>
+    </PageShell>
   );
 }

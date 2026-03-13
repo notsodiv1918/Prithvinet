@@ -25,19 +25,6 @@ export interface Report {
   status: 'Compliant' | 'Non-Compliant' | 'Pending'; submittedBy: string;
 }
 
-export interface MonthlyReport {
-  id: string; month: string; year: number;
-  so2Avg: number; no2Avg: number; pm25Avg: number; noiseAvg: number;
-  so2Max: number; no2Max: number; pm25Max: number;
-  status: 'Compliant' | 'Non-Compliant'; submittedOn: string; notes: string;
-}
-
-export interface ChatMessage {
-  id: number; from: string; fromRole: string;
-  to: string; toRole: string;
-  message: string; timestamp: string; read: boolean;
-}
-
 export interface User {
   id: number; name: string;
   role: 'Super Admin' | 'Regional Officer' | 'Monitoring Team' | 'Industry User' | 'Citizen';
@@ -107,41 +94,24 @@ export const INDUSTRIES: Industry[] = [
   },
 ];
 
-export const MONTHLY_REPORTS: MonthlyReport[] = [
-  { id:'MR001', month:'June', year:2024, so2Avg:138, no2Avg:86, pm25Avg:94, noiseAvg:73, so2Max:158, no2Max:101, pm25Max:112, status:'Non-Compliant', submittedOn:'2024-07-01', notes:'Blast furnace overhaul delayed compliance measures.' },
-  { id:'MR002', month:'May', year:2024, so2Avg:122, no2Avg:78, pm25Avg:88, noiseAvg:71, so2Max:144, no2Max:92, pm25Max:104, status:'Non-Compliant', submittedOn:'2024-06-01', notes:'Filter maintenance scheduled for Q3.' },
-  { id:'MR003', month:'April', year:2024, so2Avg:96, no2Avg:62, pm25Avg:74, noiseAvg:68, so2Max:118, no2Max:79, pm25Max:91, status:'Non-Compliant', submittedOn:'2024-05-02', notes:'New scrubber installed mid-month, partial improvement.' },
-  { id:'MR004', month:'March', year:2024, so2Avg:74, no2Avg:55, pm25Avg:58, noiseAvg:62, so2Max:88, no2Max:66, pm25Max:72, status:'Compliant', submittedOn:'2024-04-01', notes:'Annual maintenance shutdown — reduced output.' },
-  { id:'MR005', month:'February', year:2024, so2Avg:68, no2Avg:51, pm25Avg:54, noiseAvg:60, so2Max:82, no2Max:61, pm25Max:67, status:'Compliant', submittedOn:'2024-03-02', notes:'All parameters within prescribed limits.' },
-  { id:'MR006', month:'January', year:2024, so2Avg:71, no2Avg:53, pm25Avg:56, noiseAvg:61, so2Max:85, no2Max:63, pm25Max:69, status:'Compliant', submittedOn:'2024-02-01', notes:'Seasonal low production, good compliance record.' },
-];
-
 export const REPORTS: Report[] = [
-  {id:'RPT001',industry:'Bharat Steel Works',type:'Monthly',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-  {id:'RPT002',industry:'Maharashtra Textiles Ltd',type:'Monthly',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Priya Deshmukh'},
-  {id:'RPT003',industry:'Pune Chemicals Co.',type:'Monthly',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
+  {id:'RPT001',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT002',industry:'Maharashtra Textiles Ltd',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Priya Deshmukh'},
+  {id:'RPT003',industry:'Pune Chemicals Co.',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
   {id:'RPT004',industry:'Bharat Steel Works',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Non-Compliant',submittedBy:'Suresh Patil'},
   {id:'RPT005',industry:'Maharashtra Textiles Ltd',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Compliant',submittedBy:'Priya Deshmukh'},
   {id:'RPT006',industry:'Pune Chemicals Co.',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Compliant',submittedBy:'Vikram Joshi'},
-  {id:'RPT007',industry:'Bharat Steel Works',type:'Monthly',date:'2024-05-31',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-  {id:'RPT008',industry:'Pune Chemicals Co.',type:'Monthly',date:'2024-05-31',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
-  {id:'RPT009',industry:'Maharashtra Textiles Ltd',type:'Monthly',date:'2024-05-31',parameters:'SO₂, NO₂',status:'Pending',submittedBy:'Priya Deshmukh'},
-  {id:'RPT010',industry:'Bharat Steel Works',type:'Monthly',date:'2024-04-30',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-];
-
-export const CHAT_MESSAGES: ChatMessage[] = [
-  { id:1, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Rajesh, Bharat Steel has breached SO₂ limits for 5 consecutive days. Please schedule an on-site inspection this week.', timestamp:'2024-07-15 09:15', read:true },
-  { id:2, from:'Rajesh Kumar', fromRole:'Regional Officer', to:'Arjun Mehta', toRole:'Super Admin', message:'Noted sir. I will visit the facility on 17th July. Their filter maintenance is overdue by 3 weeks.', timestamp:'2024-07-15 09:42', read:true },
-  { id:3, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Also check the Hadapsar station — PM2.5 readings are unusually high. Could be a new source.', timestamp:'2024-07-15 10:05', read:true },
-  { id:4, from:'Rajesh Kumar', fromRole:'Regional Officer', to:'Arjun Mehta', toRole:'Super Admin', message:'Maharashtra Textiles NO₂ is also trending upward this week. Should I issue a formal notice?', timestamp:'2024-07-15 11:30', read:false },
-  { id:5, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Yes, issue a notice if they breach the limit again today. Keep me posted.', timestamp:'2024-07-15 11:48', read:false },
+  {id:'RPT007',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT008',industry:'Pune Chemicals Co.',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
+  {id:'RPT009',industry:'Maharashtra Textiles Ltd',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂',status:'Pending',submittedBy:'Priya Deshmukh'},
+  {id:'RPT010',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-13',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
 ];
 
 export const USERS: User[] = [
-  {id:1, name:'Arjun Mehta', role:'Super Admin', email:'admin@prithvinet.gov.in', password:'admin123', redirect:'/admin-dashboard'},
-  {id:2, name:'Rajesh Kumar', role:'Regional Officer', email:'ro@prithvinet.gov.in', password:'ro123', district:'Nagpur', redirect:'/ro-dashboard'},
-  {id:3, name:'Suresh Patil', role:'Industry User', email:'industry@bharatsteel.in', password:'industry123', redirect:'/industry-dashboard'},
-  {id:4, name:'Citizen', role:'Citizen', email:'citizen@gmail.com', password:'citizen123', redirect:'/public'},
+  {id:1,name:'Arjun Mehta',role:'Super Admin',email:'admin@prithvinet.gov.in',password:'admin123',redirect:'/dashboard'},
+  {id:2,name:'Rajesh Kumar',role:'Regional Officer',email:'ro@prithvinet.gov.in',password:'ro123',district:'Nagpur',redirect:'/dashboard'},
+  {id:3,name:'Suresh Patil',role:'Industry User',email:'industry@bharatsteel.in',password:'industry123',redirect:'/submit'},
+  {id:4,name:'Citizen',role:'Citizen',email:'citizen@gmail.com',password:'citizen123',redirect:'/public'},
 ];
 
 export const FORECAST_DATA = Array.from({length:72},(_,i)=>{
@@ -159,3 +129,17 @@ export const FORECAST_DATA = Array.from({length:72},(_,i)=>{
     actual:i<24?Math.max(40,v+Math.round((Math.random()-0.5)*15)):null,
   };
 });
+
+export interface MonthlyReport {
+  id: string; month: string; year: number;
+  so2Avg: number; no2Avg: number; pm25Avg: number;
+  status: 'Compliant' | 'Non-Compliant'; submittedOn: string;
+}
+export const MONTHLY_REPORTS: MonthlyReport[] = [
+  { id:'MR001', month:'January',  year:2024, so2Avg:138, no2Avg:84, pm25Avg:96,  status:'Non-Compliant', submittedOn:'2024-02-01' },
+  { id:'MR002', month:'February', year:2024, so2Avg:142, no2Avg:88, pm25Avg:101, status:'Non-Compliant', submittedOn:'2024-03-01' },
+  { id:'MR003', month:'March',    year:2024, so2Avg:58,  no2Avg:52, pm25Avg:49,  status:'Compliant',     submittedOn:'2024-04-02' },
+  { id:'MR004', month:'April',    year:2024, so2Avg:135, no2Avg:81, pm25Avg:93,  status:'Non-Compliant', submittedOn:'2024-05-01' },
+  { id:'MR005', month:'May',      year:2024, so2Avg:144, no2Avg:89, pm25Avg:102, status:'Non-Compliant', submittedOn:'2024-06-03' },
+  { id:'MR006', month:'June',     year:2024, so2Avg:71,  no2Avg:61, pm25Avg:58,  status:'Compliant',     submittedOn:'2024-07-01' },
+];

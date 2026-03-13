@@ -1,131 +1,105 @@
 'use client';
-import IndustrySidebar from '@/components/IndustrySidebar';
-import TopBar from '@/components/TopBar';
-import { INDUSTRIES, PRESCRIBED_LIMITS } from '@/data/mockData';
+import PageShell from '@/components/PageShell';
+import { useAuth } from '@/lib/useAuth';
+import { useRouter } from 'next/navigation';
+import { PRESCRIBED_LIMITS } from '@/data/mockData';
+import toast, { Toaster } from 'react-hot-toast';
 
-const IND = INDUSTRIES[0];
-
-const ALERTS = [
-  {
-    id: 'ALT001', type: 'AQI Breach', severity: 'breach', timestamp: '2024-07-15 14:25',
-    message: 'AQI at Nagpur Butibori MIDC has reached 267 — 167% above prescribed limit of 100.',
-    action: 'Inspection may be triggered if sustained for 2+ hours. Check emission controls immediately.',
-    resolved: false,
-  },
-  {
-    id: 'ALT002', type: 'SO₂ Exceedance', severity: 'breach', timestamp: '2024-07-15 10:10',
-    message: 'SO₂ reading of 156 ppm recorded — 95% above prescribed limit of 80 ppm.',
-    action: 'Regional Officer Rajesh Kumar has been notified. Submit corrective action report.',
-    resolved: false,
-  },
-  {
-    id: 'ALT003', type: 'Inspection Notice', severity: 'warning', timestamp: '2024-07-14 16:45',
-    message: 'Regional Officer has scheduled a site inspection for 17th July 2024 at 10:00 AM.',
-    action: 'Ensure all records, equipment logs and emission reports are ready for review.',
-    resolved: false,
-  },
-  {
-    id: 'ALT004', type: 'Report Overdue', severity: 'warning', timestamp: '2024-07-13 09:00',
-    message: 'Monthly emissions report for June 2024 was submitted 2 days after the deadline.',
-    action: 'Future delays may result in a formal notice. Submit reports by the 1st of each month.',
-    resolved: true,
-  },
-  {
-    id: 'ALT005', type: 'AQI Spike', severity: 'warning', timestamp: '2024-07-11 07:30',
-    message: 'AQI spike to 284 recorded during morning hours — likely linked to blast furnace operation.',
-    action: 'Consider staggering blast furnace activity to avoid rush-hour emissions overlap.',
-    resolved: true,
-  },
-  {
-    id: 'ALT006', type: 'Compliance Milestone', severity: 'safe', timestamp: '2024-07-12 00:00',
-    message: 'All parameters were within prescribed limits on July 12 — first compliant day in 7 days.',
-    action: 'Good progress. Continue current emission control practices.',
-    resolved: true,
-  },
+const ACTIVE_ALERTS = [
+  { id:'A001', pollutant:'SO₂', current:142, limit:80,  unit:'ppm', since:'5 days ago', action:'Inspection Notice Issued' },
+  { id:'A002', pollutant:'AQI', current:267, limit:100, unit:'',    since:'Today',      action:'Submit Report Required'  },
+];
+const RESOLVED = [
+  { id:'R001', pollutant:'PM2.5', peak:78, limit:60, unit:'µg/m³', resolved:'Jan 2026', days:4 },
+  { id:'R002', pollutant:'NO₂',   peak:72, limit:60, unit:'ppm',   resolved:'Nov 2025', days:2 },
+  { id:'R003', pollutant:'SO₂',   peak:95, limit:80, unit:'ppm',   resolved:'Sep 2025', days:7 },
 ];
 
-export default function IndustryAlerts() {
-  const active = ALERTS.filter(a => !a.resolved);
-  const resolved = ALERTS.filter(a => a.resolved);
+export default function IndustryAlertsPage() {
+  const router = useRouter();
+  const { user, mounted } = useAuth({ allowedRoles:['Industry User'] });
 
-  const severityColor = (s: string) => s === 'breach' ? '#c0392b' : s === 'warning' ? '#d4680a' : '#1a6b3a';
-  const severityBg = (s: string) => s === 'breach' ? '#fdf0ee' : s === 'warning' ? '#fef6ee' : '#f0f8f3';
-  const severityBorder = (s: string) => s === 'breach' ? '#f5c6cb' : s === 'warning' ? '#ffd966' : '#c8e0d2';
+  if (!mounted || !user) return <PageShell loading />;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f8f3' }}>
-      <IndustrySidebar />
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <TopBar title="My Alerts" subtitle="Bharat Steel Works — AQI breach alerts, inspection notices and compliance flags" />
-        <div style={{ background: 'white', borderBottom: '1px solid #e8f5ee', padding: '0.5rem 1.5rem' }}>
-          <span style={{ fontSize: '0.7rem', color: '#6b8c7a' }}>Home › My Dashboard › </span>
-          <span style={{ fontSize: '0.7rem', color: '#1a6b3a', fontWeight: '600' }}>My Alerts</span>
+    <PageShell>
+      <Toaster position="top-right" />
+      <div className="breadcrumb">
+        <span>Home</span><span>›</span>
+        <a onClick={() => router.push('/industry-dashboard')} style={{ cursor:'pointer' }}>My Dashboard</a>
+        <span>›</span>
+        <span style={{ color:'var(--danger)', fontWeight:'700' }}>My Alerts</span>
+      </div>
+      <div className="live-bar">
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <span className="live-dot" />
+          <span style={{ fontSize:'0.72rem', fontWeight:'700', color:'var(--danger)', fontFamily:'Arial', letterSpacing:'0.05em' }}>{ACTIVE_ALERTS.length} ACTIVE ALERTS</span>
         </div>
+        <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial' }}>Bharat Steel Works, Nagpur</div>
+      </div>
+      <div className="main-content" style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
 
-        <div style={{ padding: '1.25rem 1.5rem' }}>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
-            {[
-              { label: 'Active Alerts', value: active.length, color: '#c0392b' },
-              { label: 'Breach Alerts', value: active.filter(a => a.severity === 'breach').length, color: '#c0392b' },
-              { label: 'Resolved (7d)', value: resolved.length, color: '#1a6b3a' },
-            ].map(s => (
-              <div key={s.label} className="stat-card" style={{ borderTopColor: s.color }}>
-                <div style={{ fontSize: '0.68rem', color: '#6b8c7a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>{s.label}</div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '800', color: s.color, lineHeight: 1 }}>{s.value}</div>
+        <div className="section-card">
+          <div className="section-title" style={{ color:'var(--danger)' }}>Active Alerts — Immediate Attention Required</div>
+          {ACTIVE_ALERTS.map(a => (
+            <div key={a.id} style={{ background:'#fdf0ee', border:'1px solid #f5c6cb', borderLeft:'5px solid var(--danger)', borderRadius:'4px', padding:'1rem 1.25rem', marginBottom:'0.85rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div>
+                <div style={{ fontSize:'0.88rem', fontWeight:'700', color:'#721c24', marginBottom:'0.25rem' }}>
+                  {a.pollutant} Limit Breach — {a.current}{a.unit} (Limit: {a.limit}{a.unit})
+                </div>
+                <div style={{ fontSize:'0.72rem', color:'#721c24', display:'flex', gap:'1.5rem', fontFamily:'Arial' }}>
+                  <span>Since: {a.since}</span>
+                  <span>Required Action: {a.action}</span>
+                  <span>Excess: +{a.current - a.limit}{a.unit}</span>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {/* Active alerts */}
-          <div className="section-card">
-            <div className="section-title" style={{ color: '#c0392b', borderBottomColor: '#f8d7da' }}>Active Alerts — Action Required</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {active.map(a => (
-                <div key={a.id} style={{ background: severityBg(a.severity), border: `1px solid ${severityBorder(a.severity)}`, borderLeft: `4px solid ${severityColor(a.severity)}`, borderRadius: '4px', padding: '0.85rem 1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-                    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                      <span className={a.severity === 'breach' ? 'badge-breach' : 'badge-warning'}>{a.type}</span>
-                      <span style={{ fontSize: '0.65rem', color: '#6b8c7a' }}>{a.timestamp}</span>
-                    </div>
-                    <span style={{ fontSize: '0.62rem', fontFamily: 'monospace', color: '#94a3b8' }}>{a.id}</span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: severityColor(a.severity), fontWeight: '600', marginBottom: '0.3rem' }}>{a.message}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#3d5a48', background: 'rgba(255,255,255,0.6)', padding: '0.4rem 0.6rem', borderRadius: '3px', lineHeight: 1.6 }}>
-                    <strong>Recommended Action:</strong> {a.action}
-                  </div>
-                </div>
-              ))}
+              <button className="btn-danger" style={{ flexShrink:0, marginLeft:'1rem' }}
+                onClick={() => { toast.error(`Navigating to Submit Report for ${a.pollutant}`); setTimeout(() => router.push('/submit'), 800); }}>
+                Submit Report
+              </button>
             </div>
-          </div>
-
-          {/* Resolved alerts */}
-          <div className="section-card">
-            <div className="section-title" style={{ color: '#6b8c7a' }}>Resolved / Past Alerts</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {resolved.map(a => (
-                <div key={a.id} style={{ background: '#f7fcf9', border: '1px solid #e8f5ee', borderLeft: `4px solid ${severityColor(a.severity)}`, borderRadius: '4px', padding: '0.75rem 1rem', opacity: 0.8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                      <span className={a.severity === 'safe' ? 'badge-safe' : 'badge-warning'}>{a.type}</span>
-                      <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{a.timestamp}</span>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', color: '#1a6b3a', fontWeight: '600', background: '#d4edda', padding: '1px 8px', borderRadius: '8px', border: '1px solid #b8dfc4' }}>Resolved</span>
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: '#3d5a48' }}>{a.message}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: '#f7fcf9', border: '1px solid #c8e0d2', borderRadius: '4px', padding: '0.85rem 1rem', fontSize: '0.75rem', color: '#3d5a48', lineHeight: 1.8 }}>
-            <strong style={{ color: '#1a6b3a' }}>How alerts work:</strong> Alerts are automatically generated when your facility's AQI or emission readings exceed prescribed limits.
-            Breach alerts that persist for more than 2 hours are escalated to your assigned Regional Officer (<strong>Rajesh Kumar, Nagpur</strong>).
-            An inspection can be triggered after 3 consecutive breach days. Ensure emission controls are operational at all times.
-          </div>
-
+          ))}
         </div>
-      </main>
-    </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1rem' }}>
+          {[
+            { label:'Active Breaches',     value:ACTIVE_ALERTS.length, color:'var(--danger)'        },
+            { label:'Resolved This Year',  value:RESOLVED.length,      color:'var(--accent-green)'  },
+            { label:'Compliance Rate',     value:'28%',                 color:'#856404'              },
+          ].map(s => (
+            <div key={s.label} className="stat-card" style={{ borderTopColor:s.color, textAlign:'center' }}>
+              <div style={{ fontSize:'0.63rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.3rem', fontFamily:'Arial' }}>{s.label}</div>
+              <div style={{ fontSize:'2.2rem', fontWeight:'800', color:s.color, fontFamily:'Georgia' }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="section-card">
+          <div className="section-title" style={{ color:'var(--accent-green)' }}>Resolved Alerts — Historical</div>
+          <table className="gov-table">
+            <thead><tr><th>Pollutant</th><th>Peak Value</th><th>Prescribed Limit</th><th>Duration</th><th>Resolved</th></tr></thead>
+            <tbody>
+              {RESOLVED.map(r => (
+                <tr key={r.id}>
+                  <td style={{ fontWeight:'600' }}>{r.pollutant}</td>
+                  <td style={{ color:'#856404', fontWeight:'700' }}>{r.peak} {r.unit}</td>
+                  <td style={{ color:'var(--text-muted)' }}>{r.limit} {r.unit}</td>
+                  <td>{r.days} days</td>
+                  <td><span className="badge-compliant">{r.resolved}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="alert-info">
+          <strong style={{ fontSize:'0.82rem', color:'#1a2e4a' }}>Compliance Advisory</strong>
+          <div style={{ fontSize:'0.75rem', color:'#3d5a6a', marginTop:'0.3rem', lineHeight:1.8 }}>
+            Persistent SO₂ breaches for more than 7 consecutive days may result in an <strong>Inspection Notice</strong> from Regional Officer Rajesh Kumar. Submit monthly reports on time and ensure all pollution control equipment is operational. For queries, contact your Regional Officer via the Messages portal.
+          </div>
+        </div>
+
+      </div>
+    </PageShell>
   );
 }

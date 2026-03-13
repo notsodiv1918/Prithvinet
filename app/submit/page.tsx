@@ -1,105 +1,148 @@
 'use client';
+import PageShell from '@/components/PageShell';
+import { useAuth } from '@/lib/useAuth';
 import { useState } from 'react';
-import IndustrySidebar from '@/components/IndustrySidebar';
-import TopBar from '@/components/TopBar';
-import { PRESCRIBED_LIMITS } from '@/data/mockData';
+import { useRouter } from 'next/navigation';
+import { PRESCRIBED_LIMITS, REPORTS } from '@/data/mockData';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function SubmitPage() {
-  const [form, setForm] = useState({ so2: '', no2: '', pm25: '', noise: '', notes: '', month: new Date().toISOString().slice(0, 7) });
+  const router = useRouter();
+  const { user, mounted } = useAuth({ allowedRoles:['Industry User'] });
+  const [form, setForm] = useState({ so2:'', no2:'', pm25:'', noise:'', notes:'', date:new Date().toISOString().split('T')[0] });
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading,   setLoading]   = useState(false);
+
+  if (!mounted || !user) return <PageShell loading />;
+
+  const monthlySubmitted = REPORTS.some(r => r.type==='Monthly' && r.date.startsWith('2024-07'));
 
   const handle = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); toast.success('Monthly report submitted. Ref: RPT-' + Math.floor(Math.random() * 9000 + 1000), { duration: 4000 }); }, 800);
+    e.preventDefault(); setLoading(true);
+    setTimeout(() => { setLoading(false); setSubmitted(true); toast.success('Report submitted. Ref: RPT-' + Math.floor(Math.random()*9000+1000), { duration:4000 }); }, 800);
   };
 
   const fields = [
-    { key: 'so2', label: 'SO₂', unit: 'ppm', limit: PRESCRIBED_LIMITS.so2 },
-    { key: 'no2', label: 'NO₂', unit: 'ppm', limit: PRESCRIBED_LIMITS.no2 },
-    { key: 'pm25', label: 'PM2.5', unit: 'µg/m³', limit: PRESCRIBED_LIMITS.pm25 },
-    { key: 'noise', label: 'Noise Level', unit: 'dB(A)', limit: PRESCRIBED_LIMITS.noiseDay },
+    { key:'so2',   label:'SO₂',         unit:'ppm',   limit:PRESCRIBED_LIMITS.so2 },
+    { key:'no2',   label:'NO₂',         unit:'ppm',   limit:PRESCRIBED_LIMITS.no2 },
+    { key:'pm25',  label:'PM2.5',       unit:'µg/m³', limit:PRESCRIBED_LIMITS.pm25 },
+    { key:'noise', label:'Noise Level', unit:'dB(A)', limit:PRESCRIBED_LIMITS.noiseDay },
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f8f3' }}>
-      <IndustrySidebar />
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <TopBar title="Submit Monthly Report" subtitle="Bharat Steel Works, Nagpur — Monthly emissions submission" />
-        <div style={{ background: 'white', borderBottom: '1px solid #e8f5ee', padding: '0.5rem 1.5rem' }}>
-          <span style={{ fontSize: '0.7rem', color: '#6b8c7a' }}>Home › My Dashboard › </span>
-          <span style={{ fontSize: '0.7rem', color: '#1a6b3a', fontWeight: '600' }}>Submit Report</span>
+    <PageShell>
+      <Toaster position="top-right" toastOptions={{ style:{ background:'white', color:'var(--text-dark)', border:'1px solid var(--border)', fontFamily:'Arial', fontSize:'0.82rem' } }} />
+      <div className="breadcrumb">
+        <span>Home</span><span>›</span>
+        <a onClick={() => router.push('/industry-dashboard')} style={{ cursor:'pointer' }}>My Dashboard</a>
+        <span>›</span>
+        <span style={{ color:'var(--navy)', fontWeight:'700' }}>Submit Report</span>
+      </div>
+      <div className="live-bar">
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <span className="live-dot" />
+          <span style={{ fontSize:'0.72rem', fontWeight:'700', color:'#22c55e', fontFamily:'Arial' }}>LIVE</span>
+          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial', marginLeft:'0.35rem' }}>
+            Bharat Steel Works, Nagpur · Monthly Report Portal
+          </span>
         </div>
-        <Toaster position="top-right" toastOptions={{ style: { background: 'white', color: '#1a2e22', border: '1px solid #c8e0d2' } }} />
-        <div style={{ padding: '1.25rem 1.5rem', maxWidth: '700px' }}>
-          <div style={{ background: '#fdf0ee', border: '1px solid #f5c6cb', borderLeft: '4px solid #c0392b', borderRadius: '4px', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#721c24', fontWeight: '600', marginBottom: '0.2rem' }}>⚠ Compliance Notice</div>
-            <div style={{ fontSize: '0.78rem', color: '#721c24', lineHeight: 1.6 }}>Your facility has exceeded prescribed SO₂ limits for 3 of the last 6 months. Monthly reports must be submitted by the 1st of each following month under the Environment (Protection) Act, 1986.</div>
+        <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial' }}>Industry User Portal</span>
+      </div>
+      <div className="main-content" style={{ maxWidth:'740px', display:'flex', flexDirection:'column', gap:'1.25rem' }}>
+
+        <div className="alert-critical">
+          <strong style={{ fontSize:'0.8rem', color:'#721c24' }}>Compliance Notice — Immediate Action Required</strong>
+          <div style={{ fontSize:'0.75rem', color:'#721c24', marginTop:'0.25rem', lineHeight:1.7 }}>
+            Your facility has exceeded prescribed SO2 limits on 5 of the last 7 days. Monthly report is due by 31 July 2024. Submitting accurate data is mandatory under the Environment (Protection) Act, 1986.
           </div>
-          <div className="section-card">
-            <div className="section-title">Monthly Emissions Report Form</div>
-            {submitted ? (
-              <div style={{ textAlign: 'center', padding: '2rem', background: '#f0f8f3', borderRadius: '4px', border: '1px solid #c8e0d2' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✅</div>
-                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1a6b3a', marginBottom: '0.4rem' }}>Report Submitted Successfully</div>
-                <div style={{ fontSize: '0.8rem', color: '#6b8c7a', marginBottom: '1.25rem' }}>Assigned to Regional Officer Rajesh Kumar for review.</div>
+        </div>
+
+        <div style={{ background:'white', border:'1px solid var(--border)', borderRadius:'4px', padding:'0.85rem 1.1rem', display:'flex', justifyContent:'space-between', alignItems:'center', boxShadow:'0 1px 3px rgba(26,39,68,0.06)' }}>
+          <div>
+            <div style={{ fontSize:'0.82rem', fontWeight:'700', color:'var(--text-dark)', fontFamily:'Georgia' }}>July 2024 Monthly Report</div>
+            <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial', marginTop:'0.1rem' }}>Period: 1 July - 31 July 2024 · Due: 31 July 2024</div>
+          </div>
+          <span className={monthlySubmitted ? 'badge-compliant' : 'badge-pending'}>
+            {monthlySubmitted ? 'Submitted' : 'Pending'}
+          </span>
+        </div>
+
+        <div className="section-card">
+          <div className="section-title">Monthly Emissions Report Form</div>
+          {submitted ? (
+            <div style={{ textAlign:'center', padding:'2.5rem 1rem', background:'#f0f8f3', borderRadius:'4px', border:'1px solid #c8dfc8' }}>
+              <div style={{ fontSize:'3rem', marginBottom:'0.75rem' }}>✅</div>
+              <div style={{ fontSize:'1rem', fontWeight:'700', color:'var(--accent-green)', fontFamily:'Georgia', marginBottom:'0.4rem' }}>Report Submitted Successfully</div>
+              <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', fontFamily:'Arial', marginBottom:'1.5rem' }}>Assigned to Rajesh Kumar (Regional Officer, Nagpur) for review.</div>
+              <div style={{ display:'flex', gap:'0.6rem', justifyContent:'center' }}>
                 <button className="btn-primary" onClick={() => setSubmitted(false)}>Submit Another</button>
+                <button className="btn-outline" onClick={() => router.push('/industry-reports')}>View My Reports</button>
               </div>
-            ) : (
-              <form onSubmit={handle}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: '600', color: '#3d5a48', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Reporting Month *</label>
-                  <input type="month" value={form.month} onChange={e => setForm(f => ({ ...f, month: e.target.value }))}
-                    style={{ border: '1px solid #a0c8b4', borderRadius: '3px', padding: '0.5rem 0.75rem', color: '#1a2e22', fontSize: '0.875rem', background: 'white', width: '220px' }} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  {fields.map(f => {
-                    const val = Number((form as any)[f.key]);
-                    const over = val > 0 && val > f.limit;
-                    return (
-                      <div key={f.key}>
-                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: '600', color: '#3d5a48', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          {f.label} ({f.unit}) * <span style={{ color: '#6b8c7a', fontWeight: 400, fontSize: '0.65rem', textTransform: 'none' }}>Limit: {f.limit}</span>
-                        </label>
-                        <input type="number" placeholder={`Monthly avg ${f.label}`} value={(form as any)[f.key]}
-                          onChange={e => setForm(fv => ({ ...fv, [f.key]: e.target.value }))} required
-                          style={{ width: '100%', border: `1px solid ${over ? '#f5c6cb' : '#a0c8b4'}`, borderRadius: '3px', padding: '0.5rem 0.75rem', color: '#1a2e22', fontSize: '0.875rem', background: 'white' }} />
-                        {over && <div style={{ fontSize: '0.7rem', color: '#c0392b', marginTop: '0.2rem' }}>⚠ Exceeds limit by {val - f.limit} {f.unit}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: '600', color: '#3d5a48', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Remarks / Notes</label>
-                  <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
-                    placeholder="Maintenance, equipment issues, corrective actions..."
-                    style={{ width: '100%', border: '1px solid #a0c8b4', borderRadius: '3px', padding: '0.55rem 0.75rem', color: '#1a2e22', fontSize: '0.875rem', background: 'white', resize: 'vertical', fontFamily: 'inherit' }} />
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <button type="submit" disabled={loading} className="btn-primary" style={{ padding: '0.6rem 2rem' }}>{loading ? 'Submitting...' : 'Submit Monthly Report'}</button>
-                  <button type="button" className="btn-outline" onClick={() => setForm({ so2: '', no2: '', pm25: '', noise: '', notes: '', month: new Date().toISOString().slice(0, 7) })}>Clear</button>
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#6b8c7a', background: '#f7fcf9', padding: '0.6rem 0.75rem', borderRadius: '3px', border: '1px solid #e8f5ee', lineHeight: 1.7 }}>
-                  By submitting, you certify this data is accurate under the Environment (Protection) Rules, 1986.
-                </div>
-              </form>
-            )}
-          </div>
-          <div className="section-card">
-            <div className="section-title">Prescribed Limits — Reference</div>
-            <table className="gov-table">
-              <thead><tr><th>Parameter</th><th>Limit</th><th>Unit</th><th>Authority</th></tr></thead>
-              <tbody>
-                {[['SO₂', PRESCRIBED_LIMITS.so2, 'ppm', 'MPCB/CPCB'],['NO₂', PRESCRIBED_LIMITS.no2, 'ppm', 'MPCB/CPCB'],['PM2.5', PRESCRIBED_LIMITS.pm25, 'µg/m³', 'MPCB/CPCB'],['Noise (Day)', PRESCRIBED_LIMITS.noiseDay, 'dB(A)', 'Noise Rules 2000']].map(([p,v,u,a]) => (
-                  <tr key={String(p)}><td style={{ fontWeight:'600' }}>{p}</td><td style={{ color:'#c0392b', fontWeight:'700' }}>{v}</td><td style={{ color:'#6b8c7a' }}>{u}</td><td style={{ color:'#6b8c7a', fontSize:'0.78rem' }}>{a}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            </div>
+          ) : (
+            <form onSubmit={handle}>
+              <div style={{ marginBottom:'1rem' }}>
+                <label style={{ display:'block', fontSize:'0.68rem', fontWeight:'700', color:'var(--text-mid)', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:'Arial', marginBottom:'0.35rem' }}>
+                  Reporting Period *
+                </label>
+                <input type="date" value={form.date} onChange={e => setForm(f => ({...f,date:e.target.value}))}
+                  style={{ border:'1.5px solid var(--border)', borderRadius:'4px', padding:'0.5rem 0.75rem', color:'var(--text-dark)', fontSize:'0.875rem', fontFamily:'Arial', background:'var(--off-white)', width:'210px', outline:'none' }} />
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', marginBottom:'1rem' }}>
+                {fields.map(f => {
+                  const val = Number((form as any)[f.key]);
+                  const over = val > 0 && val > f.limit;
+                  return (
+                    <div key={f.key}>
+                      <label style={{ display:'block', fontSize:'0.68rem', fontWeight:'700', color:'var(--text-mid)', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:'Arial', marginBottom:'0.35rem' }}>
+                        {f.label} ({f.unit}) *
+                        <span style={{ marginLeft:'0.5rem', color:'var(--text-muted)', fontWeight:400, fontSize:'0.65rem', textTransform:'none' }}>Limit: {f.limit}</span>
+                      </label>
+                      <input type="number" placeholder={`Enter ${f.label}`} value={(form as any)[f.key]}
+                        onChange={e => setForm(fv => ({...fv,[f.key]:e.target.value}))} required
+                        style={{ width:'100%', border:`1.5px solid ${over?'#f5c6cb':'var(--border)'}`, borderRadius:'4px', padding:'0.5rem 0.75rem', color:'var(--text-dark)', fontSize:'0.875rem', fontFamily:'Arial', background:'var(--off-white)', outline:'none' }} />
+                      {over && <div style={{ fontSize:'0.68rem', color:'var(--danger)', marginTop:'0.25rem', background:'#fdf0ee', padding:'0.2rem 0.5rem', borderRadius:'3px', fontFamily:'Arial' }}>Exceeds limit by {val - f.limit} {f.unit}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ marginBottom:'1.25rem' }}>
+                <label style={{ display:'block', fontSize:'0.68rem', fontWeight:'700', color:'var(--text-mid)', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:'Arial', marginBottom:'0.35rem' }}>Remarks / Operational Notes</label>
+                <textarea value={form.notes} onChange={e => setForm(f => ({...f,notes:e.target.value}))} rows={3}
+                  placeholder="Maintenance activities, equipment issues, or explanations for any exceedances..."
+                  style={{ width:'100%', border:'1.5px solid var(--border)', borderRadius:'4px', padding:'0.55rem 0.75rem', color:'var(--text-dark)', fontSize:'0.875rem', fontFamily:'Arial', background:'var(--off-white)', resize:'vertical', outline:'none' }} />
+              </div>
+              <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1rem' }}>
+                <button type="submit" disabled={loading} className="btn-primary" style={{ padding:'0.6rem 2rem' }}>
+                  {loading ? 'Submitting...' : 'Submit Monthly Report'}
+                </button>
+                <button type="button" className="btn-outline" onClick={() => setForm({ so2:'', no2:'', pm25:'', noise:'', notes:'', date:new Date().toISOString().split('T')[0] })}>Clear Form</button>
+              </div>
+              <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontFamily:'Arial', background:'var(--off-white)', padding:'0.6rem 0.85rem', borderRadius:'4px', border:'1px solid var(--border)', lineHeight:1.8 }}>
+                By submitting, you certify this data is accurate under the Environment (Protection) Rules, 1986. False reporting is punishable under Section 15 of the Act.
+              </div>
+            </form>
+          )}
         </div>
-      </main>
-    </div>
+
+        <div className="section-card">
+          <div className="section-title">Prescribed Limits Reference</div>
+          <table className="gov-table">
+            <thead><tr><th>Parameter</th><th>Prescribed Limit</th><th>Unit</th><th>Regulatory Authority</th></tr></thead>
+            <tbody>
+              {[['SO₂',PRESCRIBED_LIMITS.so2,'ppm','MPCB / CPCB'],['NO₂',PRESCRIBED_LIMITS.no2,'ppm','MPCB / CPCB'],['PM2.5',PRESCRIBED_LIMITS.pm25,'µg/m³','MPCB / CPCB'],['Noise (Day)',PRESCRIBED_LIMITS.noiseDay,'dB(A)','Noise Pollution Rules, 2000']].map(([p,v,u,a]) => (
+                <tr key={String(p)}>
+                  <td style={{ fontWeight:'600' }}>{p}</td>
+                  <td style={{ color:'var(--danger)', fontWeight:'800', fontFamily:'Georgia' }}>{v}</td>
+                  <td style={{ color:'var(--text-muted)' }}>{u}</td>
+                  <td style={{ color:'var(--text-muted)', fontSize:'0.75rem' }}>{a}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </PageShell>
   );
 }

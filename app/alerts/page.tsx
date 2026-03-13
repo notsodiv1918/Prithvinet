@@ -1,186 +1,195 @@
 'use client';
-import { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
-import TopBar from '@/components/TopBar';
+import PageShell from '@/components/PageShell';
+import { useAuth } from '@/lib/useAuth';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { STATIONS, INDUSTRIES, PRESCRIBED_LIMITS } from '@/data/mockData';
 import toast, { Toaster } from 'react-hot-toast';
 
 const MISSING = [
-  { industry:'Vidarbha Coal Ltd', district:'Nagpur', due:'2024-07-13', type:'Daily' },
-  { industry:'Konkan Fertilizers', district:'Ratnagiri', due:'2024-07-12', type:'Monthly' },
-  { industry:'Latur Cement Works', district:'Latur', due:'2024-07-10', type:'Daily' },
+  { industry:'Vidarbha Coal Ltd',    district:'Nagpur',     due:'2024-07-13', type:'Monthly' },
+  { industry:'Konkan Fertilizers',   district:'Ratnagiri',  due:'2024-07-12', type:'Monthly' },
+  { industry:'Latur Cement Works',   district:'Latur',      due:'2024-07-10', type:'Daily'   },
 ];
 
 export default function AlertsPage() {
-  const [escalated, setEscalated] = useState<Set<string>>(new Set());
-  const [reminded, setReminded] = useState<Set<string>>(new Set());
+  const router = useRouter();
+  const { user, mounted } = useAuth({ allowedRoles:['Super Admin','Regional Officer','Monitoring Team'] });
+  const [escalated,   setEscalated]   = useState<Set<string>>(new Set());
+  const [reminded,    setReminded]    = useState<Set<string>>(new Set());
+  const [inspections, setInspections] = useState<Set<string>>(new Set());
 
-  const breachStations = STATIONS.filter(s => s.status==='breach');
-  const warnStations = STATIONS.filter(s => s.status==='warning');
+  if (!mounted || !user) return <PageShell loading />;
+
+  const isRO           = user.role === 'Regional Officer';
+  const breachStations = STATIONS.filter(s => s.status === 'breach');
+  const warnStations   = STATIONS.filter(s => s.status === 'warning');
+  const myIndustries   = isRO ? INDUSTRIES.filter(i => i.assignedRO === 'Rajesh Kumar') : INDUSTRIES;
+  const myMissing      = isRO ? MISSING.filter(m => m.district === 'Nagpur') : MISSING;
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh', background:'#f0f8f3' }}>
-      <Sidebar />
-      <main style={{ flex:1, overflow:'auto' }}>
-        <TopBar title="Alerts & Compliance" subtitle="Active breach alerts, escalation workflow and missing reports" />
-        <div style={{ background:'white', borderBottom:'1px solid #e8f5ee', padding:'0.5rem 1.5rem' }}>
-          <span style={{ fontSize:'0.7rem', color:'#6b8c7a' }}>Home › </span>
-          <span style={{ fontSize:'0.7rem', color:'#1a6b3a', fontWeight:'600' }}>Alerts & Compliance</span>
+    <PageShell>
+      <Toaster position="top-right" toastOptions={{ style:{ background:'white', color:'var(--text-dark)', border:'1px solid var(--border)', fontFamily:'Arial', fontSize:'0.82rem' } }} />
+      <div className="breadcrumb">
+        <span>🏠 Home</span><span>›</span>
+        <a onClick={() => router.push('/dashboard')} style={{ cursor:'pointer' }}>Dashboard</a>
+        <span>›</span>
+        <span style={{ color:'var(--danger)', fontWeight:'700' }}>⚐ Alerts &amp; Notices</span>
+      </div>
+      <div className="live-bar">
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <span className="live-dot" />
+          <span style={{ fontSize:'0.72rem', fontWeight:'700', color:'var(--danger)', fontFamily:'Arial', letterSpacing:'0.05em' }}>
+            {breachStations.length} ACTIVE BREACH{breachStations.length !== 1 ? 'ES' : ''}
+          </span>
+          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial', marginLeft:'0.35rem' }}>
+            · {warnStations.length} warnings · {myMissing.length} missing reports
+          </span>
         </div>
-        <Toaster position="top-right" toastOptions={{ style:{ background:'white', color:'#1a2e22', border:'1px solid #c8e0d2' } }} />
+        <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial' }}>
+          {isRO ? 'Nagpur Zone' : 'Maharashtra — All Zones'}
+        </span>
+      </div>
+      <div className="main-content" style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
 
-        <div style={{ padding:'1.25rem 1.5rem' }}>
-
-          {/* Summary cards */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1rem', marginBottom:'1.25rem' }}>
-            {[
-              { label:'Active Breaches', value:breachStations.length, color:'#c0392b', bg:'#fdf0ee', border:'#f5c6cb' },
-              { label:'Active Warnings', value:warnStations.length, color:'#d4680a', bg:'#fef6ee', border:'#ffd966' },
-              { label:'Missing Reports', value:MISSING.length, color:'#1a4e8a', bg:'#e8f0ff', border:'#b8d0f0' },
-            ].map(s => (
-              <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.border}`, borderLeft:`4px solid ${s.color}`, borderRadius:'4px', padding:'1rem', display:'flex', alignItems:'center', gap:'1rem' }}>
-                <div style={{ fontSize:'2.5rem', fontWeight:'800', color:s.color, lineHeight:1 }}>{s.value}</div>
-                <div style={{ fontSize:'0.82rem', fontWeight:'600', color:s.color }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Breach alert banner */}
-          {breachStations.length > 0 && (
-            <div style={{ background:'#fdf0ee', border:'1px solid #f5c6cb', borderLeft:'4px solid #c0392b', borderRadius:'4px', padding:'0.75rem 1rem', marginBottom:'1.25rem', display:'flex', gap:'0.75rem' }}>
-              <span style={{ fontSize:'1rem' }}>⚠️</span>
-              <div style={{ fontSize:'0.8rem', color:'#721c24', lineHeight:1.6 }}>
-                <strong>{breachStations.length} monitoring stations</strong> are currently recording values above prescribed limits.
-                Immediate action is required. Please escalate to the concerned Regional Officer.
-              </div>
+        {isRO && (
+          <div className="alert-info">
+            <strong style={{ fontSize:'0.78rem' }}>ℹ Regional Officer — Nagpur Zone</strong>
+            <div style={{ fontSize:'0.73rem', marginTop:'0.2rem', lineHeight:1.7 }}>
+              You can send reminders and schedule inspections for your assigned region. For system-wide actions, contact the Super Admin via <strong>Messages</strong>.
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Active Breaches Table */}
-          <div className="section-card">
-            <div className="section-title" style={{ color:'#c0392b', borderBottomColor:'#f8d7da' }}>Active Breaches — Immediate Action Required</div>
-            <div style={{ overflowX:'auto' }}>
-              <table className="gov-table">
-                <thead>
-                  <tr><th>Station Name</th><th>District</th><th>Parameter</th><th>Current Value</th><th>Prescribed Limit</th><th>Excess %</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                  {breachStations.map(s => {
-                    const params = [
-                      s.so2>PRESCRIBED_LIMITS.so2?['SO₂',s.so2,PRESCRIBED_LIMITS.so2]:null,
-                      s.no2>PRESCRIBED_LIMITS.no2?['NO₂',s.no2,PRESCRIBED_LIMITS.no2]:null,
-                      s.pm25>PRESCRIBED_LIMITS.pm25?['PM2.5',s.pm25,PRESCRIBED_LIMITS.pm25]:null,
-                    ].filter(Boolean);
-                    return params.slice(0,1).map(param => (
-                      <tr key={s.id}>
-                        <td style={{ fontWeight:'600' }}>{s.name}</td>
-                        <td style={{ color:'#6b8c7a' }}>{s.district}</td>
-                        <td style={{ color:'#1a6b3a', fontWeight:'600' }}>{param![0]} ppm</td>
-                        <td style={{ color:'#c0392b', fontWeight:'700' }}>{param![1]}</td>
-                        <td style={{ color:'#6b8c7a' }}>{param![2]}</td>
-                        <td style={{ color:'#c0392b', fontWeight:'700' }}>+{Math.round(((Number(param![1])-Number(param![2]))/Number(param![2]))*100)}%</td>
-                        <td><span className="badge-breach">BREACH</span></td>
-                        <td>
-                          {escalated.has(s.id) ? (
-                            <span style={{ fontSize:'0.75rem', color:'#1a6b3a', fontWeight:'600' }}>✓ Escalated</span>
-                          ) : (
-                            <button className="btn-danger" style={{ fontSize:'0.72rem', padding:'0.3rem 0.8rem' }}
-                              onClick={() => { setEscalated(p=>new Set(p).add(s.id)); toast.error(`Alert escalated to RO for ${s.name}`,{icon:'📋'}); }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1rem' }}>
+          {[
+            { label:'Active Breaches', value:breachStations.length, color:'var(--danger)',      bg:'#fdf0ee', bdr:'#f5c6cb' },
+            { label:'Active Warnings', value:warnStations.length,   color:'#d4680a',            bg:'#fef6ee', bdr:'#ffd966' },
+            { label:'Missing Reports', value:myMissing.length,       color:'var(--accent-blue)', bg:'#e8f0f8', bdr:'#c8d4e8' },
+          ].map(s => (
+            <div key={s.label} className="stat-card" style={{ borderTopColor:s.color, display:'flex', alignItems:'center', gap:'1rem' }}>
+              <div style={{ fontSize:'2.6rem', fontWeight:'800', color:s.color, lineHeight:1, fontFamily:'Georgia' }}>{s.value}</div>
+              <div style={{ fontSize:'0.8rem', fontWeight:'700', color:s.color, fontFamily:'Arial' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="section-card">
+          <div className="section-title" style={{ color:'var(--danger)' }}>🚨 Active Breaches — Immediate Action Required</div>
+          <div style={{ overflowX:'auto' }}>
+            <table className="gov-table">
+              <thead><tr><th>Station</th><th>District</th><th>AQI</th><th>SO₂ ppm</th><th>NO₂ ppm</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                {breachStations.map(s => (
+                  <tr key={s.id}>
+                    <td style={{ fontWeight:'600' }}>{s.name}</td>
+                    <td style={{ color:'var(--text-muted)' }}>{s.district}</td>
+                    <td style={{ color:'var(--danger)', fontWeight:'800', fontFamily:'Georgia' }}>{s.aqi}</td>
+                    <td style={{ color:s.so2>PRESCRIBED_LIMITS.so2?'var(--danger)':'var(--text-dark)', fontWeight:s.so2>PRESCRIBED_LIMITS.so2?'700':'400' }}>{s.so2}</td>
+                    <td>{s.no2}</td>
+                    <td><span className="badge-breach">Breach</span></td>
+                    <td>
+                      {isRO ? (
+                        inspections.has(s.id)
+                          ? <span style={{ fontSize:'0.73rem', color:'var(--accent-green)', fontWeight:'700', fontFamily:'Arial' }}>✓ Inspection Scheduled</span>
+                          : <button className="btn-danger" style={{ fontSize:'0.7rem', padding:'0.25rem 0.65rem' }}
+                              onClick={() => { setInspections(p => new Set(p).add(s.id)); toast.error(`Inspection scheduled: ${s.name}`, { icon:'📋' }); }}>
+                              Schedule Inspection
+                            </button>
+                      ) : (
+                        escalated.has(s.id)
+                          ? <span style={{ fontSize:'0.73rem', color:'var(--accent-green)', fontWeight:'700', fontFamily:'Arial' }}>✓ Escalated to RO</span>
+                          : <button className="btn-danger" style={{ fontSize:'0.7rem', padding:'0.25rem 0.65rem' }}
+                              onClick={() => { setEscalated(p => new Set(p).add(s.id)); toast.error(`Escalated: ${s.name}`, { icon:'🚨' }); }}>
                               Escalate to RO
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ));
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          {/* Warnings Table */}
-          <div className="section-card">
-            <div className="section-title" style={{ color:'#d4680a', borderBottomColor:'#fff3cd' }}>Active Warnings — Monitor Closely</div>
-            <div style={{ overflowX:'auto' }}>
-              <table className="gov-table">
-                <thead><tr><th>Station</th><th>District</th><th>AQI</th><th>SO₂</th><th>NO₂</th><th>PM2.5</th><th>Status</th></tr></thead>
-                <tbody>
-                  {warnStations.map(s=>(
-                    <tr key={s.id}>
-                      <td style={{ fontWeight:'600' }}>{s.name}</td>
-                      <td style={{ color:'#6b8c7a' }}>{s.district}</td>
-                      <td style={{ color:'#d4680a', fontWeight:'700' }}>{s.aqi}</td>
-                      <td>{s.so2}</td><td>{s.no2}</td><td>{s.pm25}</td>
-                      <td><span className="badge-warning">WARNING</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Industry non-compliance */}
-          <div className="section-card">
-            <div className="section-title">Industry Non-Compliance Tracker</div>
-            <div style={{ overflowX:'auto' }}>
-              <table className="gov-table">
-                <thead><tr><th>Industry</th><th>Type</th><th>District</th><th>Compliance</th><th>SO₂</th><th>NO₂</th><th>Days Breached (7d)</th><th>Assigned RO</th></tr></thead>
-                <tbody>
-                  {INDUSTRIES.filter(i=>i.complianceRate<80).map(ind=>{
-                    const days=ind.history.filter(h=>h.so2>PRESCRIBED_LIMITS.so2).length;
-                    return (
-                      <tr key={ind.id}>
-                        <td style={{ fontWeight:'600' }}>{ind.name}</td>
-                        <td style={{ color:'#6b8c7a', fontSize:'0.78rem' }}>{ind.type}</td>
-                        <td style={{ color:'#6b8c7a' }}>{ind.district}</td>
-                        <td style={{ color:ind.complianceRate<50?'#c0392b':'#d4680a', fontWeight:'700' }}>{ind.complianceRate}%</td>
-                        <td style={{ color:ind.currentSo2>PRESCRIBED_LIMITS.so2?'#c0392b':'#1a2e22', fontWeight:'600' }}>{ind.currentSo2}</td>
-                        <td style={{ color:ind.currentNo2>PRESCRIBED_LIMITS.no2?'#c0392b':'#1a2e22' }}>{ind.currentNo2}</td>
-                        <td style={{ color:'#c0392b', fontWeight:'700' }}>{days}/7</td>
-                        <td style={{ color:'#1a6b3a', fontSize:'0.78rem' }}>{ind.assignedRO}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Missing Reports */}
-          <div className="section-card">
-            <div className="section-title">Missing Reports — Follow-up Required</div>
-            <div style={{ overflowX:'auto' }}>
-              <table className="gov-table">
-                <thead><tr><th>Industry</th><th>District</th><th>Report Type</th><th>Due Date</th><th>Days Overdue</th><th>Action</th></tr></thead>
-                <tbody>
-                  {MISSING.map(r=>(
-                    <tr key={r.industry}>
-                      <td style={{ fontWeight:'600' }}>{r.industry}</td>
-                      <td style={{ color:'#6b8c7a' }}>{r.district}</td>
-                      <td>{r.type}</td>
-                      <td style={{ color:'#d4680a' }}>{r.due}</td>
-                      <td style={{ color:'#c0392b', fontWeight:'700' }}>
-                        {Math.round((new Date('2024-07-15').getTime()-new Date(r.due).getTime())/86400000)} days
-                      </td>
-                      <td>
-                        {reminded.has(r.industry) ? (
-                          <span style={{ fontSize:'0.75rem', color:'#1a6b3a', fontWeight:'600' }}>✓ Reminder Sent</span>
-                        ) : (
-                          <button className="btn-outline" style={{ fontSize:'0.72rem', padding:'0.3rem 0.8rem' }}
-                            onClick={()=>{ setReminded(p=>new Set(p).add(r.industry)); toast(`Reminder sent to ${r.industry}`,{icon:'📧'}); }}>
+        <div className="section-card">
+          <div className="section-title">🏭 {isRO ? 'My Industry Compliance Actions' : 'Industry Non-Compliance Tracker'}</div>
+          <div style={{ overflowX:'auto' }}>
+            <table className="gov-table">
+              <thead>
+                <tr>
+                  <th>Industry</th><th>District</th><th>Compliance</th>
+                  <th>SO₂ ppm</th><th>NO₂ ppm</th>
+                  {!isRO && <th>Assigned RO</th>}
+                  <th>Reminder</th><th>Inspection</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myIndustries.filter(i => i.complianceRate < 80).map(ind => (
+                  <tr key={ind.id}>
+                    <td style={{ fontWeight:'600' }}>{ind.name}</td>
+                    <td style={{ color:'var(--text-muted)' }}>{ind.district}</td>
+                    <td style={{ color:ind.complianceRate<50?'var(--danger)':'#d4680a', fontWeight:'800', fontFamily:'Georgia' }}>{ind.complianceRate}%</td>
+                    <td style={{ color:ind.currentSo2>PRESCRIBED_LIMITS.so2?'var(--danger)':'var(--text-dark)', fontWeight:ind.currentSo2>PRESCRIBED_LIMITS.so2?'700':'400' }}>{ind.currentSo2}</td>
+                    <td>{ind.currentNo2}</td>
+                    {!isRO && <td style={{ fontSize:'0.78rem', color:'var(--accent-green)' }}>{ind.assignedRO}</td>}
+                    <td>
+                      {reminded.has(ind.id+'-rem')
+                        ? <span style={{ fontSize:'0.73rem', color:'var(--accent-green)', fontWeight:'700', fontFamily:'Arial' }}>✓ Sent</span>
+                        : <button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.25rem 0.65rem' }}
+                            onClick={() => { setReminded(p => new Set(p).add(ind.id+'-rem')); toast(`Reminder sent to ${ind.name}`, { icon:'📧' }); }}>
                             Send Reminder
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      }
+                    </td>
+                    <td>
+                      {inspections.has(ind.id)
+                        ? <span style={{ fontSize:'0.73rem', color:'var(--accent-green)', fontWeight:'700', fontFamily:'Arial' }}>✓ Scheduled</span>
+                        : <button className="btn-danger" style={{ fontSize:'0.7rem', padding:'0.25rem 0.65rem' }}
+                            onClick={() => { setInspections(p => new Set(p).add(ind.id)); toast.error(`Inspection: ${ind.name}`, { icon:'📋' }); }}>
+                            Inspect
+                          </button>
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
         </div>
-      </main>
-    </div>
+
+        <div className="section-card">
+          <div className="section-title">📋 Missing Compliance Reports</div>
+          <div style={{ overflowX:'auto' }}>
+            <table className="gov-table">
+              <thead><tr><th>Industry</th><th>District</th><th>Report Type</th><th>Due Date</th><th>Days Overdue</th><th>Reminder</th></tr></thead>
+              <tbody>
+                {myMissing.map(r => (
+                  <tr key={r.industry}>
+                    <td style={{ fontWeight:'600' }}>{r.industry}</td>
+                    <td style={{ color:'var(--text-muted)' }}>{r.district}</td>
+                    <td>{r.type}</td>
+                    <td style={{ color:'#d4680a', fontWeight:'600' }}>{r.due}</td>
+                    <td style={{ color:'var(--danger)', fontWeight:'800', fontFamily:'Georgia' }}>
+                      {Math.round((new Date('2024-07-15').getTime()-new Date(r.due).getTime())/86400000)} days
+                    </td>
+                    <td>
+                      {reminded.has(r.industry)
+                        ? <span style={{ fontSize:'0.73rem', color:'var(--accent-green)', fontWeight:'700', fontFamily:'Arial' }}>✓ Reminder Sent</span>
+                        : <button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.25rem 0.65rem' }}
+                            onClick={() => { setReminded(p => new Set(p).add(r.industry)); toast(`Reminder sent to ${r.industry}`, { icon:'📧' }); }}>
+                            Send Reminder
+                          </button>
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </PageShell>
   );
 }

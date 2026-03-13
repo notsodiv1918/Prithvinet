@@ -1,113 +1,104 @@
 'use client';
-import IndustrySidebar from '@/components/IndustrySidebar';
-import TopBar from '@/components/TopBar';
-import { MONTHLY_REPORTS, PRESCRIBED_LIMITS } from '@/data/mockData';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
+import PageShell from '@/components/PageShell';
+import { useAuth } from '@/lib/useAuth';
+import { useRouter } from 'next/navigation';
+import { REPORTS } from '@/data/mockData';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function IndustryReports() {
-  const chartData = [...MONTHLY_REPORTS].reverse().map(r => ({
-    month: r.month.slice(0, 3),
-    SO2: r.so2Avg, NO2: r.no2Avg, PM25: r.pm25Avg,
-  }));
+  const router = useRouter();
+  const { user, mounted } = useAuth({ allowedRoles:['Industry User'] });
+
+  if (!mounted || !user) return <PageShell loading />;
+
+  const myReports    = REPORTS.filter(r => r.industry === 'Bharat Steel Works');
+  const compliant    = myReports.filter(r => r.status === 'Compliant').length;
+  const nonCompliant = myReports.filter(r => r.status === 'Non-Compliant').length;
+  const rate         = Math.round((compliant / myReports.length) * 100);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f8f3' }}>
-      <IndustrySidebar />
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <TopBar title="Past Monthly Reports" subtitle="Bharat Steel Works — submission history and compliance record" />
-        <div style={{ background: 'white', borderBottom: '1px solid #e8f5ee', padding: '0.5rem 1.5rem' }}>
-          <span style={{ fontSize: '0.7rem', color: '#6b8c7a' }}>Home › My Dashboard › </span>
-          <span style={{ fontSize: '0.7rem', color: '#1a6b3a', fontWeight: '600' }}>Past Reports</span>
+    <PageShell>
+      <Toaster position="top-right" toastOptions={{ style:{ background:'white', color:'var(--text-dark)', border:'1px solid var(--border)', fontFamily:'Arial', fontSize:'0.82rem' } }} />
+      <div className="breadcrumb">
+        <span>Home</span><span>›</span>
+        <a onClick={() => router.push('/industry-dashboard')} style={{ cursor:'pointer' }}>My Dashboard</a>
+        <span>›</span>
+        <span style={{ color:'var(--navy)', fontWeight:'700' }}>Past Reports</span>
+      </div>
+      <div className="live-bar">
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <span className="live-dot" />
+          <span style={{ fontSize:'0.72rem', fontWeight:'700', color:'#22c55e', fontFamily:'Arial' }}>LIVE</span>
+          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial', marginLeft:'0.35rem' }}>
+            {myReports.length} submissions · {rate}% compliance rate · Bharat Steel Works
+          </span>
         </div>
-        <Toaster position="top-right" toastOptions={{ style: { background: 'white', color: '#1a2e22', border: '1px solid #c8e0d2' } }} />
+        <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial' }}>Industry Compliance History</span>
+      </div>
+      <div className="main-content" style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
 
-        <div style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1rem' }}>
+          {[
+            { label:'Total Reports',   value:myReports.length, color:'var(--accent-blue)'  },
+            { label:'Compliant',       value:compliant,        color:'var(--accent-green)' },
+            { label:'Non-Compliant',   value:nonCompliant,     color:'var(--danger)'       },
+            { label:'Compliance Rate', value:`${rate}%`,       color:rate<50?'var(--danger)':'#d4680a' },
+          ].map(s => (
+            <div key={s.label} className="stat-card" style={{ borderTopColor:s.color }}>
+              <div style={{ fontSize:'0.63rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.3rem', fontFamily:'Arial' }}>{s.label}</div>
+              <div style={{ fontSize:'2rem', fontWeight:'800', color:s.color, lineHeight:1, fontFamily:'Georgia' }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
 
-          {/* Summary stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
-            {[
-              { label: 'Total Reports', value: MONTHLY_REPORTS.length, sub: 'Last 6 months', color: '#1a6b3a' },
-              { label: 'Compliant', value: MONTHLY_REPORTS.filter(r => r.status === 'Compliant').length, sub: 'Months in compliance', color: '#1a6b3a' },
-              { label: 'Non-Compliant', value: MONTHLY_REPORTS.filter(r => r.status === 'Non-Compliant').length, sub: 'Months with breaches', color: '#c0392b' },
-            ].map(s => (
-              <div key={s.label} className="stat-card" style={{ borderTopColor: s.color }}>
-                <div style={{ fontSize: '0.68rem', color: '#6b8c7a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>{s.label}</div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '800', color: s.color, lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: '0.7rem', color: '#6b8c7a', marginTop: '0.2rem' }}>{s.sub}</div>
+        <div className="alert-warning">
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <strong style={{ fontSize:'0.82rem', color:'#856404' }}>Monthly Report Due: 31 July 2024</strong>
+              <div style={{ fontSize:'0.72rem', color:'#856404', marginTop:'0.2rem', lineHeight:1.7 }}>
+                Your monthly emissions report has not been submitted yet. Failure to submit by the deadline may result in non-compliance action.
               </div>
-            ))}
+            </div>
+            <button className="btn-primary" style={{ flexShrink:0, marginLeft:'1.25rem' }} onClick={() => router.push('/submit')}>Submit Now</button>
           </div>
+        </div>
 
-          {/* Chart */}
-          <div className="section-card">
-            <div className="section-title">6-Month Average Emissions Trend</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e8f5ee" />
-                <XAxis dataKey="month" tick={{ fill: '#6b8c7a', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#6b8c7a', fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: 'white', border: '1px solid #c8e0d2', fontSize: '12px' }} />
-                <ReferenceLine y={PRESCRIBED_LIMITS.so2} stroke="#c0392b" strokeDasharray="4 4" label={{ value: 'SO₂ Limit', fill: '#c0392b', fontSize: 9 }} />
-                <Bar dataKey="SO2" name="SO₂ Avg" radius={[2, 2, 0, 0]}>
-                  {chartData.map((entry, i) => <Cell key={i} fill={entry.SO2 > PRESCRIBED_LIMITS.so2 ? '#c0392b' : '#1a6b3a'} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Reports table */}
-          <div className="section-card">
-            <div className="section-title">Monthly Report History</div>
+        <div className="section-card">
+          <div className="section-title">Submission History — Bharat Steel Works</div>
+          <div style={{ overflowX:'auto' }}>
             <table className="gov-table">
-              <thead>
-                <tr>
-                  <th>Month / Year</th>
-                  <th>Avg SO₂ (ppm)</th>
-                  <th>Avg NO₂ (ppm)</th>
-                  <th>Avg PM2.5</th>
-                  <th>Max SO₂</th>
-                  <th>Avg Noise (dB)</th>
-                  <th>Status</th>
-                  <th>Submitted</th>
-                  <th>Notes</th>
-                  <th>Download</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Report ID</th><th>Type</th><th>Date</th><th>Parameters</th><th>Status</th><th>Action</th></tr></thead>
               <tbody>
-                {MONTHLY_REPORTS.map(r => (
+                {myReports.map(r => (
                   <tr key={r.id}>
-                    <td style={{ fontWeight: '700' }}>{r.month} {r.year}</td>
-                    <td style={{ color: r.so2Avg > PRESCRIBED_LIMITS.so2 ? '#c0392b' : '#1a2e22', fontWeight: r.so2Avg > PRESCRIBED_LIMITS.so2 ? '700' : '400' }}>{r.so2Avg}</td>
-                    <td style={{ color: r.no2Avg > PRESCRIBED_LIMITS.no2 ? '#c0392b' : '#1a2e22' }}>{r.no2Avg}</td>
-                    <td style={{ color: r.pm25Avg > PRESCRIBED_LIMITS.pm25 ? '#c0392b' : '#1a2e22' }}>{r.pm25Avg}</td>
-                    <td style={{ color: r.so2Max > PRESCRIBED_LIMITS.so2 ? '#c0392b' : '#1a2e22', fontSize: '0.78rem' }}>{r.so2Max}</td>
-                    <td>{r.noiseAvg}</td>
-                    <td><span className={r.status === 'Compliant' ? 'badge-compliant' : 'badge-noncompliant'}>{r.status}</span></td>
-                    <td style={{ color: '#6b8c7a', fontSize: '0.78rem' }}>{r.submittedOn}</td>
-                    <td style={{ fontSize: '0.72rem', color: '#6b8c7a', maxWidth: '160px' }}>{r.notes}</td>
+                    <td style={{ color:'var(--accent-green)', fontFamily:'monospace', fontWeight:'600', fontSize:'0.78rem' }}>{r.id}</td>
                     <td>
-                      <button className="btn-outline" style={{ fontSize: '0.68rem', padding: '0.2rem 0.6rem' }}
-                        onClick={() => toast(`Report ${r.month} ${r.year} downloaded`, { icon: '📄' })}>
-                        PDF
-                      </button>
+                      <span style={{ background:r.type==='Monthly'?'#e8f0f8':'#e8f5ee', color:r.type==='Monthly'?'var(--accent-blue)':'var(--accent-green)', padding:'2px 9px', borderRadius:'10px', fontSize:'0.67rem', fontWeight:'700', fontFamily:'Arial', border:`1px solid ${r.type==='Monthly'?'#c8d4e8':'#c8e0d2'}` }}>
+                        {r.type}
+                      </span>
                     </td>
+                    <td style={{ color:'var(--text-muted)', fontSize:'0.8rem' }}>{r.date}</td>
+                    <td style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>{r.parameters}</td>
+                    <td><span className={r.status==='Compliant'?'badge-compliant':r.status==='Non-Compliant'?'badge-noncompliant':'badge-pending'}>{r.status}</span></td>
+                    <td><button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.22rem 0.6rem' }} onClick={() => toast(`Report ${r.id} downloaded`, { icon:'📄' })}>Download</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Important notice */}
-          <div style={{ background: '#f7fcf9', border: '1px solid #c8e0d2', borderRadius: '4px', padding: '1rem', fontSize: '0.75rem', color: '#3d5a48', lineHeight: 1.8 }}>
-            <strong style={{ color: '#1a6b3a' }}>Reporting Obligation:</strong> Monthly emissions reports must be submitted by the 1st of each following month as per the Environment (Protection) Rules, 1986.
-            Failure to submit within 15 days of the due date may result in a formal notice from your Regional Officer ({' '}
-            <strong>Rajesh Kumar, Nagpur Zone</strong>).
-            Persistent non-compliance can lead to temporary suspension of Consent to Operate (CTO) under the Water (Prevention and Control of Pollution) Act, 1974.
-          </div>
-
         </div>
-      </main>
-    </div>
+
+        <div className="section-card" style={{ borderLeft:'4px solid var(--danger)', background:'#fef8f8' }}>
+          <div className="section-title" style={{ color:'var(--danger)' }}>Notice from Regional Officer</div>
+          <p style={{ fontSize:'0.82rem', color:'#721c24', lineHeight:1.8, fontFamily:'Arial' }}>
+            Your facility has recorded <strong>non-compliant emissions on 5 of the last 7 reporting days</strong>. SO₂ levels have consistently exceeded the prescribed limit of 80 ppm. You are required to submit a corrective action plan within 7 days and ensure all pollution control equipment is functioning. Failure to comply may result in a formal show-cause notice under the Environment (Protection) Act, 1986.
+          </p>
+          <div style={{ marginTop:'0.75rem', fontSize:'0.72rem', color:'#721c24', fontWeight:'700', fontFamily:'Arial' }}>
+            — Rajesh Kumar, Regional Officer, Nagpur · 15 July 2024
+          </div>
+        </div>
+
+      </div>
+    </PageShell>
   );
 }

@@ -1,253 +1,214 @@
 'use client';
-import { useState } from 'react';
-import { NOISE_STATIONS, NOISE_TREND, NOISE_LIMITS, NoiseStation } from '@/data/waterNoiseData';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { NOISE_STATIONS, NOISE_LIMITS } from '@/data/waterNoiseData';
 
-const statusColor = (s: string) => s === 'safe' ? '#1a6b3a' : s === 'warning' ? '#856404' : '#c0392b';
-const statusBg = (s: string) => s === 'safe' ? '#d4edda' : s === 'warning' ? '#fff3cd' : '#f8d7da';
-const statusBorder = (s: string) => s === 'safe' ? '#b0d9bc' : s === 'warning' ? '#ffd966' : '#f5c6cb';
-const zoneIcon = (z: string) => z === 'Industrial' ? '🏭' : z === 'Commercial' ? '🏢' : z === 'Residential' ? '🏘' : '🌿';
+export default function PublicNoisePage() {
+  const [time, setTime] = useState('');
+  const [zoneFilter, setZoneFilter] = useState('All');
+  useEffect(() => {
+    const update = () => setTime(new Date().toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' }));
+    update();
+    const t = setInterval(update, 60000);
+    return () => clearInterval(t);
+  }, []);
 
-export default function PublicNoise() {
-  const router = useRouter();
-  const [selected, setSelected] = useState<NoiseStation | null>(null);
-  const [filterZone, setFilterZone] = useState<string>('All');
+  const NEWS = [
+    '🔊 Noise levels at Dharavi Industrial Area exceeding 81 dB(A) — Limit: 75 dB(A) · Notice issued',
+    '🔴 LIVE: Bharat Steel Works SO₂ at 142 ppm — Inspection Ordered by MPCB',
+    '⚠ Nag River Nagpur water quality CRITICAL — Immediate action required',
+    '📋 Monthly compliance reports due 31 March 2026 — All industries must submit',
+    '📡 New monitoring station commissioned at Aurangabad MIDC — Real-time data now available',
+  ];
+  const tickerFull = [...NEWS, ...NEWS].join('   ◆   ');
 
-  const zones = ['All', 'Residential', 'Commercial', 'Industrial', 'Silence'];
-  const filtered = filterZone === 'All' ? NOISE_STATIONS : NOISE_STATIONS.filter(s => s.zone === filterZone);
+  const zones = ['All', 'Industrial', 'Commercial', 'Residential', 'Silence'];
+  const filtered = zoneFilter === 'All' ? NOISE_STATIONS : NOISE_STATIONS.filter(s => s.zone === zoneFilter);
+  const breaches  = NOISE_STATIONS.filter(s => s.status === 'breach');
+  const warnings  = NOISE_STATIONS.filter(s => s.status === 'warning');
+  const compliant = NOISE_STATIONS.filter(s => s.status === 'safe');
 
-  const counts = {
-    safe: NOISE_STATIONS.filter(s => s.status === 'safe').length,
-    warning: NOISE_STATIONS.filter(s => s.status === 'warning').length,
-    breach: NOISE_STATIONS.filter(s => s.status === 'breach').length,
-  };
-
-  const barData = NOISE_STATIONS.map(s => ({
-    name: s.district, day: s.dayLevel, limit: s.dayLimit,
-    status: s.status,
-  }));
+  const sColor = (s: string) => s==='safe'?'#1a6b3a':s==='warning'?'#856404':'#c0392b';
+  const sBg    = (s: string) => s==='safe'?'#d4edda':s==='warning'?'#fff3cd':'#fdf0ee';
+  const zIcon  = (z: string) => z==='Industrial'?'🏭':z==='Commercial'?'🏢':z==='Residential'?'🏘':'🌿';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fdf8f0', fontFamily: 'Segoe UI, Arial, sans-serif', color: '#2a1e0a' }}>
+    <div style={{ minHeight:'100vh', background:'var(--light-gray)', display:'flex', flexDirection:'column' }}>
 
       {/* Tricolour */}
-      <div style={{ height: '4px', background: 'linear-gradient(90deg,#FF9933 33.3%,#fff 33.3%,#fff 66.6%,#138808 66.6%)' }} />
+      <div style={{ height:'5px', background:'linear-gradient(to right,#FF6B00 33.33%,#FFFFFF 33.33% 66.66%,#138808 66.66%)' }} />
 
-      {/* Header */}
-      <div style={{ background: '#5a3500', padding: '0.6rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-          <span style={{ fontSize: '1.5rem' }}>🔊</span>
-          <div>
-            <div style={{ fontSize: '0.55rem', color: '#d4b080', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Government of Maharashtra · MPCB</div>
-            <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'white' }}>PrithviNet — Noise Pollution Portal</div>
+      {/* Ticker */}
+      <div style={{ background:'var(--navy)', height:'32px', display:'flex', alignItems:'center', overflow:'hidden' }}>
+        <div style={{ background:'#FF6B00', color:'white', fontSize:'0.62rem', fontWeight:'700', letterSpacing:'0.1em', textTransform:'uppercase', padding:'0 0.85rem', height:'100%', display:'flex', alignItems:'center', flexShrink:0, fontFamily:'Arial' }}>LATEST</div>
+        <div style={{ flex:1, overflow:'hidden' }}>
+          <div style={{ whiteSpace:'nowrap', animation:'ticker-scroll 35s linear infinite', color:'#c8d4e8', fontSize:'0.7rem', fontFamily:'Arial', display:'inline-block' }}>
+            {tickerFull}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tickerFull}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '0.62rem', color: '#d4b080' }}>Live · {new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</span>
-          <button onClick={() => router.push('/')}
-            style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '3px', padding: '0.28rem 0.7rem', fontSize: '0.7rem', cursor: 'pointer' }}>
-            ← Home
-          </button>
+        <div style={{ background:'rgba(255,255,255,0.06)', borderLeft:'1px solid rgba(255,255,255,0.1)', padding:'0 0.85rem', height:'100%', display:'flex', alignItems:'center', gap:'0.5rem', flexShrink:0 }}>
+          <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#22c55e', animation:'pulse-dot 2s infinite' }} />
+          <span style={{ fontSize:'0.65rem', color:'#22c55e', fontWeight:'700', fontFamily:'Arial' }}>LIVE</span>
+        </div>
+        <style>{`
+          @keyframes ticker-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+          @keyframes pulse-dot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{opacity:.8;box-shadow:0 0 0 5px rgba(34,197,94,0)} }
+        `}</style>
+      </div>
+
+      {/* Header */}
+      <div style={{ background:'white', borderBottom:'2px solid var(--border)', padding:'0.85rem 2rem', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'1.1rem' }}>
+          <img src="/logo.jpeg" alt="PrithviNet" style={{ height:'60px', width:'auto' }} />
+          <div style={{ borderLeft:'2px solid var(--border)', paddingLeft:'1rem' }}>
+            <div style={{ fontSize:'1.05rem', fontWeight:'800', color:'var(--navy)', fontFamily:'Georgia' }}>PRITHVINET</div>
+            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontFamily:'Arial', marginTop:'0.1rem' }}>Public Noise Pollution Portal</div>
+            <div style={{ fontSize:'0.62rem', color:'#94a3b8', fontFamily:'Arial' }}>Maharashtra State Pollution Control Board</div>
+          </div>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
+          <div style={{ textAlign:'right', fontFamily:'Arial' }}>
+            <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>Data updated: {time}</div>
+            <div style={{ fontSize:'0.6rem', color:'#94a3b8', marginTop:'0.1rem' }}>Refreshes every 60 seconds</div>
+          </div>
+          <a href="/" style={{ background:'var(--navy)', color:'white', fontSize:'0.72rem', fontFamily:'Arial', fontWeight:'600', padding:'0.38rem 0.85rem', borderRadius:'3px', textDecoration:'none' }}>🔐 Staff Login</a>
         </div>
       </div>
-      <div style={{ background: '#422800', borderBottom: '3px solid #e8a000', padding: '0.25rem 2rem' }}>
-        <span style={{ fontSize: '0.62rem', color: '#e8c880' }}>Noise Pollution (Regulation &amp; Control) Rules 2000 — 10 monitoring stations across Maharashtra</span>
+
+      {/* Portal nav */}
+      <div style={{ background:'var(--navy)', display:'flex', alignItems:'center', height:'38px', padding:'0 1.5rem' }}>
+        {[
+          { href:'/public',       label:'💨 Air Quality',   active:false },
+          { href:'/public-water', label:'💧 Water Quality', active:false },
+          { href:'/public-noise', label:'🔊 Noise Levels',  active:true  },
+        ].map(item => (
+          <a key={item.href} href={item.href}
+            style={{ display:'flex', alignItems:'center', padding:'0 1rem', height:'100%', color:item.active?'white':'#94a3b8', fontSize:'0.78rem', fontFamily:'Arial', fontWeight:item.active?'700':'500', textDecoration:'none', borderBottom:item.active?'3px solid #fbbf24':'3px solid transparent', background:item.active?'rgba(255,255,255,0.07)':'none' }}>
+            {item.label}
+          </a>
+        ))}
+        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+          <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#22c55e' }} />
+          <span style={{ fontSize:'0.65rem', color:'#94a3b8', fontFamily:'Arial' }}>Real-time · {NOISE_STATIONS.length} zones active</span>
+        </div>
       </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem 2rem' }}>
+      <div style={{ maxWidth:'1200px', margin:'0 auto', padding:'1.5rem 2rem', width:'100%' }}>
 
-        {/* Alert banner */}
-        {counts.breach > 0 && (
-          <div style={{ background: '#f8d7da', border: '1px solid #f5c6cb', borderLeft: '5px solid #c0392b', borderRadius: '4px', padding: '0.85rem 1.2rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem' }}>
-            <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+        {/* Breach banner */}
+        {breaches.length > 0 && (
+          <div className="alert-critical" style={{ marginBottom:'1.5rem', display:'flex', gap:'0.85rem', alignItems:'flex-start' }}>
+            <span style={{ fontSize:'1.3rem', flexShrink:0 }}>🔊</span>
             <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#721c24', marginBottom: '0.15rem' }}>Noise Limit Breach — Health Advisory</div>
-              <div style={{ fontSize: '0.75rem', color: '#721c24', lineHeight: 1.7 }}>
-                <strong>{counts.breach} stations</strong> are recording noise levels above prescribed limits. Prolonged exposure above 65 dB can cause hearing loss and cardiovascular stress.
-                Residents near {NOISE_STATIONS.filter(s => s.status === 'breach').slice(0, 2).map(s => s.name).join(', ')} should limit outdoor exposure.
+              <strong style={{ fontSize:'0.85rem', color:'#721c24' }}>Noise Limit Exceeded in {breaches.length} Zone{breaches.length>1?'s':''}</strong>
+              <div style={{ fontSize:'0.78rem', color:'#721c24', marginTop:'0.25rem', lineHeight:1.7 }}>
+                {breaches.map(s => `${s.name} — ${s.dayLevel} dB(A) (Limit: ${s.dayLimit})`).join(' · ')}.
+                Prolonged exposure above prescribed limits may cause hearing damage and health issues.
               </div>
             </div>
           </div>
         )}
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Summary cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1rem', marginBottom:'1.5rem' }}>
           {[
-            { label: 'Stations', value: NOISE_STATIONS.length, color: '#5a3500', bg: '#fff8ee', border: '#f0d8a0' },
-            { label: 'Compliant', value: counts.safe, color: '#1a6b3a', bg: '#f0f8f3', border: '#c8e0d2' },
-            { label: 'Warning', value: counts.warning, color: '#856404', bg: '#fffbee', border: '#ffd966' },
-            { label: 'Breach', value: counts.breach, color: '#c0392b', bg: '#fdf0ee', border: '#f5c6cb' },
+            { label:'Monitoring Zones', value:NOISE_STATIONS.length, color:'#5a3500' },
+            { label:'Compliant',        value:compliant.length,      color:'#1a6b3a' },
+            { label:'Warning',          value:warnings.length,       color:'#856404' },
+            { label:'Breach',           value:breaches.length,       color:'#c0392b' },
           ].map(s => (
-            <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderTop: `3px solid ${s.color}`, borderRadius: '4px', padding: '1rem', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: '0.65rem', color: '#6b5a3a', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.3rem' }}>{s.label}</div>
-              <div style={{ fontSize: '2rem', fontWeight: '800', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div key={s.label} className="stat-card" style={{ borderTopColor:s.color, textAlign:'center' }}>
+              <div style={{ fontSize:'0.63rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.3rem', fontFamily:'Arial' }}>{s.label}</div>
+              <div style={{ fontSize:'2.2rem', fontWeight:'800', color:s.color, lineHeight:1, fontFamily:'Georgia' }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        {/* Day noise bar chart */}
-        <div style={{ background: 'white', border: '1px solid #e8d8c0', borderRadius: '4px', padding: '1.2rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5a3500', marginBottom: '0.25rem' }}>Daytime Noise Levels vs Limits — All Stations</div>
-          <div style={{ fontSize: '0.65rem', color: '#6b5a3a', marginBottom: '1rem' }}>Red bars exceed the prescribed day limit for that zone · Limits differ by zone type</div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={barData} margin={{ top: 5, right: 15, bottom: 5, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0e8d8" />
-              <XAxis dataKey="name" tick={{ fill: '#6b5a3a', fontSize: 10 }} angle={-20} textAnchor="end" height={40} />
-              <YAxis tick={{ fill: '#6b5a3a', fontSize: 11 }} domain={[0, 90]} />
-              <Tooltip contentStyle={{ background: 'white', border: '1px solid #e8d8c0', fontSize: '12px' }}
-                formatter={(v: number, n: string) => [`${v} dB(A)`, n]} />
-              <Bar dataKey="day" name="Day Level dB(A)" radius={[3, 3, 0, 0]}>
-                {barData.map((entry, i) => (
-                  <Cell key={i} fill={entry.status === 'breach' ? '#c0392b' : entry.status === 'warning' ? '#e6990a' : '#2d8653'} />
+        {/* Zone filter */}
+        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'1rem' }}>
+          <span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontFamily:'Arial', fontWeight:'600' }}>Filter by zone:</span>
+          {zones.map(z => (
+            <button key={z} onClick={() => setZoneFilter(z)}
+              style={{ fontSize:'0.72rem', fontFamily:'Arial', fontWeight:zoneFilter===z?'700':'500', padding:'0.25rem 0.75rem', borderRadius:'15px', border:'1.5px solid', borderColor:zoneFilter===z?'var(--navy)':'var(--border)', background:zoneFilter===z?'var(--navy)':'white', color:zoneFilter===z?'white':'var(--text-mid)', cursor:'pointer', transition:'all 0.12s' }}>
+              {z}
+            </button>
+          ))}
+        </div>
+
+        {/* Station cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(230px,1fr))', gap:'0.85rem', marginBottom:'1.75rem' }}>
+          {filtered.map(s => (
+            <div key={s.id} style={{ background:'white', border:`1px solid ${s.status==='breach'?'#f5c6cb':s.status==='warning'?'#ffd966':'#dde2ec'}`, borderTop:`3px solid ${sColor(s.status)}`, borderRadius:'4px', padding:'1rem', boxShadow:'0 1px 3px rgba(26,39,68,0.06)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0.5rem' }}>
+                <div>
+                  <div style={{ fontSize:'0.88rem', fontWeight:'700', color:'var(--navy)', fontFamily:'Georgia' }}>{s.name}</div>
+                  <div style={{ fontSize:'0.65rem', color:'var(--text-muted)', fontFamily:'Arial', marginTop:'0.1rem' }}>{zIcon(s.zone)} {s.zone} · {s.district}</div>
+                </div>
+                <span style={{ background:sBg(s.status), color:sColor(s.status), fontSize:'0.62rem', fontWeight:'700', fontFamily:'Arial', padding:'2px 8px', borderRadius:'2px', textTransform:'uppercase', flexShrink:0 }}>{s.status}</span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.3rem', marginBottom:'0.5rem' }}>
+                {[
+                  ['Day Level', `${s.dayLevel} dB`, s.dayLevel > s.dayLimit],
+                  ['Day Limit', `${s.dayLimit} dB`, false],
+                  ['Night Level', `${s.nightLevel} dB`, s.nightLevel > s.nightLimit],
+                  ['Night Limit', `${s.nightLimit} dB`, false],
+                ].map(([k,v,bad]) => (
+                  <div key={String(k)} style={{ background:'var(--light-gray)', borderRadius:'3px', padding:'0.3rem 0.45rem', border:`1px solid ${bad?'#f5c6cb':'var(--border)'}` }}>
+                    <div style={{ fontSize:'0.58rem', color:'var(--text-muted)', fontFamily:'Arial' }}>{k}</div>
+                    <div style={{ fontSize:'0.82rem', fontWeight:'700', fontFamily:'Georgia', color:bad?'var(--danger)':'var(--text-dark)' }}>{String(v)}</div>
+                  </div>
                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+              </div>
+              <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', fontFamily:'Arial' }}>Primary source: {s.primarySource}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Hourly trend */}
-        <div style={{ background: 'white', border: '1px solid #e8d8c0', borderRadius: '4px', padding: '1.2rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5a3500', marginBottom: '0.25rem' }}>24-Hour Noise Pattern — Residential Zone, Mumbai</div>
-          <div style={{ fontSize: '0.65rem', color: '#6b5a3a', marginBottom: '1rem' }}>Peak hours: 8am–10am and 6pm–8pm · Night limit is 45 dB(A) for residential zones</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={NOISE_TREND} margin={{ top: 5, right: 15, bottom: 5, left: -10 }}>
-              <defs>
-                <linearGradient id="noiseG" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#c0392b" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#c0392b" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0e8d8" />
-              <XAxis dataKey="time" tick={{ fill: '#6b5a3a', fontSize: 11 }} />
-              <YAxis tick={{ fill: '#6b5a3a', fontSize: 11 }} domain={[40, 90]} />
-              <Tooltip contentStyle={{ background: 'white', border: '1px solid #e8d8c0', fontSize: '12px' }}
-                formatter={(v: number) => [`${v} dB(A)`, 'Noise Level']} />
-              <ReferenceLine y={55} stroke="#1a6b3a" strokeDasharray="4 4" label={{ value: 'Day limit 55', fill: '#1a6b3a', fontSize: 9 }} />
-              <ReferenceLine y={45} stroke="#c0392b" strokeDasharray="4 4" label={{ value: 'Night limit 45', fill: '#c0392b', fontSize: 9 }} />
-              <Area type="monotone" dataKey="level" stroke="#c0392b" strokeWidth={2.5} fill="url(#noiseG)" name="Noise dB(A)" dot={{ r: 3, fill: '#c0392b' }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Zone filter + cards */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '2px solid #e8d8c0', paddingBottom: '0.5rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#5a3500', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Monitoring Stations</div>
-          <div style={{ display: 'flex', gap: '0.35rem' }}>
-            {zones.map(z => (
-              <button key={z} onClick={() => setFilterZone(z)}
-                style={{ padding: '0.25rem 0.6rem', borderRadius: '3px', fontSize: '0.65rem', fontWeight: filterZone === z ? '700' : '400', background: filterZone === z ? '#5a3500' : 'white', color: filterZone === z ? 'white' : '#5a3500', border: '1px solid #e8d8c0', cursor: 'pointer' }}>
-                {z}
-              </button>
+        {/* Zone limits guide */}
+        <div className="section-card" style={{ marginBottom:'1.5rem' }}>
+          <div className="section-title" style={{ color:'#5a3500' }}>🔊 Prescribed Noise Limits by Zone Type</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))', gap:'0.6rem' }}>
+            {(Object.entries(NOISE_LIMITS) as [string,[number,number]][]).map(([zone,[day,night]]) => (
+              <div key={zone} style={{ background:'#fff8ee', borderRadius:'4px', padding:'0.75rem 0.9rem', borderLeft:'3px solid #5a3500' }}>
+                <div style={{ fontSize:'0.78rem', fontWeight:'700', color:'#5a3500', fontFamily:'Arial', marginBottom:'0.3rem' }}>{zIcon(zone)} {zone} Zone</div>
+                <div style={{ fontSize:'0.75rem', color:'var(--text-dark)', fontFamily:'Arial' }}>Day: <strong>{day} dB(A)</strong></div>
+                <div style={{ fontSize:'0.75rem', color:'var(--text-dark)', fontFamily:'Arial' }}>Night: <strong>{night} dB(A)</strong></div>
+                <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', fontFamily:'Arial', marginTop:'0.2rem' }}>
+                  {zone==='Industrial'?'Heavy machinery, factory areas':zone==='Commercial'?'Markets, shops, offices':zone==='Residential'?'Housing, schools, hospitals':'Hospitals, courts, libraries'}
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
-          {filtered.map(s => (
-            <div key={s.id} onClick={() => setSelected(selected?.id === s.id ? null : s)}
-              style={{ background: 'white', border: `1px solid ${statusBorder(s.status)}`, borderTop: `3px solid ${statusColor(s.status)}`, borderRadius: '4px', padding: '0.9rem', cursor: 'pointer', boxShadow: selected?.id === s.id ? `0 0 0 2px ${statusColor(s.status)}` : '0 1px 4px rgba(0,0,0,0.05)', transition: 'box-shadow 0.15s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#2a1e0a' }}>{s.name}</div>
-                  <div style={{ fontSize: '0.62rem', color: '#6b5a3a' }}>{s.district}</div>
-                </div>
-                <span style={{ background: statusBg(s.status), color: statusColor(s.status), border: `1px solid ${statusBorder(s.status)}`, fontSize: '0.6rem', fontWeight: '700', padding: '1px 7px', borderRadius: '10px' }}>
-                  {s.status}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem' }}>{zoneIcon(s.zone)}</span>
-                <span style={{ fontSize: '0.65rem', color: '#6b5a3a' }}>{s.zone} Zone</span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
-                {[
-                  ['Day', s.dayLevel, s.dayLimit, 'dB'],
-                  ['Night', s.nightLevel, s.nightLimit, 'dB'],
-                ].map(([k, v, lim, u]) => {
-                  const bad = Number(v) > Number(lim);
-                  return (
-                    <div key={String(k)} style={{ background: bad ? '#fdf0ee' : '#fdf8f0', border: `1px solid ${bad ? '#f5c6cb' : '#e8d8c0'}`, borderRadius: '3px', padding: '0.28rem 0.4rem' }}>
-                      <div style={{ fontSize: '0.58rem', color: '#94a3b8' }}>{k}</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '800', color: bad ? '#c0392b' : '#2a1e0a' }}>{v} <span style={{ fontSize: '0.55rem', fontWeight: 400, color: '#94a3b8' }}>{u}</span></div>
-                      <div style={{ fontSize: '0.55rem', color: '#94a3b8' }}>Limit: {lim}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ fontSize: '0.62rem', color: '#6b5a3a', marginTop: '0.5rem' }}>📍 {s.primarySource}</div>
+        {/* Health info */}
+        <div className="section-card" style={{ borderLeft:'4px solid #5a3500', background:'#fffbf5', marginBottom:'1.5rem' }}>
+          <div className="section-title" style={{ color:'#5a3500' }}>💡 Noise Pollution — Health Advisory</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem', fontSize:'0.78rem', color:'var(--text-mid)', fontFamily:'Arial', lineHeight:1.8 }}>
+            <div>
+              <div style={{ fontWeight:'700', color:'#c0392b', marginBottom:'0.3rem' }}>Health impacts of excess noise:</div>
+              <ul style={{ paddingLeft:'1.2rem' }}>
+                <li>Hearing loss with prolonged exposure above 85 dB</li>
+                <li>Increased stress, anxiety and sleep disruption</li>
+                <li>Cardiovascular health risks at 65+ dB sustained</li>
+                <li>Learning difficulties in children near noisy zones</li>
+              </ul>
             </div>
-          ))}
-        </div>
-
-        {/* Expanded detail */}
-        {selected && (
-          <div style={{ background: 'white', border: `1px solid ${statusBorder(selected.status)}`, borderLeft: `5px solid ${statusColor(selected.status)}`, borderRadius: '4px', padding: '1.2rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#2a1e0a' }}>{zoneIcon(selected.zone)} {selected.name} — {selected.district}</div>
-                <div style={{ fontSize: '0.68rem', color: '#6b5a3a' }}>{selected.zone} Zone · Primary source: {selected.primarySource} · Updated: {selected.lastUpdated}</div>
-              </div>
-              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+            <div>
+              <div style={{ fontWeight:'700', color:'#5a3500', marginBottom:'0.3rem' }}>File a complaint:</div>
+              <ul style={{ paddingLeft:'1.2rem' }}>
+                <li>MPCB Helpline: <strong>1800-233-3535</strong> (Toll Free)</li>
+                <li>Police Control Room: <strong>100</strong></li>
+                <li>Sampark: sampark.maharashtra.gov.in</li>
+                <li>Email: helpdesk@mpcb.gov.in</li>
+              </ul>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.75rem' }}>
-              {[
-                ['Day Level', selected.dayLevel, selected.dayLimit, 'dB(A)', selected.dayLevel > selected.dayLimit],
-                ['Day Limit', selected.dayLimit, null, 'dB(A)', false],
-                ['Night Level', selected.nightLevel, selected.nightLimit, 'dB(A)', selected.nightLevel > selected.nightLimit],
-                ['Night Limit', selected.nightLimit, null, 'dB(A)', false],
-              ].map(([k, v, lim, u, bad]) => (
-                <div key={String(k)} style={{ background: bad ? '#fdf0ee' : '#fdf8f0', border: `1px solid ${bad ? '#f5c6cb' : '#e8d8c0'}`, borderRadius: '4px', padding: '0.75rem', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.65rem', color: '#6b5a3a', marginBottom: '0.2rem' }}>{k}</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: '800', color: bad ? '#c0392b' : '#2a1e0a' }}>{v}</div>
-                  <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{u}</div>
-                  {bad && <div style={{ fontSize: '0.6rem', color: '#c0392b', marginTop: '0.2rem', fontWeight: '600' }}>⚠ +{Number(v) - Number(lim)} dB over</div>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Limits reference */}
-        <div style={{ background: 'white', border: '1px solid #e8d8c0', borderRadius: '4px', padding: '1.2rem' }}>
-          <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#5a3500', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.75rem' }}>Prescribed Noise Limits — Rules 2000</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-            <thead>
-              <tr style={{ background: '#5a3500' }}>
-                {['Zone', 'Zone Type', 'Day Limit dB(A)', 'Night Limit dB(A)'].map(h => (
-                  <th key={h} style={{ padding: '0.5rem 0.75rem', color: 'white', fontWeight: '700', fontSize: '0.72rem', textAlign: 'left', letterSpacing: '0.03em' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {([
-                ['Industrial', '🏭', '75', '70'],
-                ['Commercial', '🏢', '65', '55'],
-                ['Residential', '🏘', '55', '45'],
-                ['Silence Zone', '🌿', '50', '40'],
-              ]).map(([z, icon, day, night], i) => (
-                <tr key={z} style={{ background: i % 2 === 0 ? '#fdf8f0' : 'white', borderBottom: '1px solid #f0e8d8' }}>
-                  <td style={{ padding: '0.5rem 0.75rem' }}>{icon} {z}</td>
-                  <td style={{ padding: '0.5rem 0.75rem', color: '#6b5a3a', fontSize: '0.7rem' }}>
-                    {z === 'Industrial' ? 'Factories, plants' : z === 'Commercial' ? 'Markets, offices' : z === 'Residential' ? 'Housing areas' : 'Hospitals, schools'}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.75rem', fontWeight: '700', color: '#c0392b' }}>{day} dB</td>
-                  <td style={{ padding: '0.5rem 0.75rem', fontWeight: '700', color: '#1a5280' }}>{night} dB</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{ marginTop: '0.75rem', fontSize: '0.65rem', color: '#6b5a3a', lineHeight: 1.7 }}>
-            Source: Noise Pollution (Regulation &amp; Control) Rules, 2000 under the Environment (Protection) Act, 1986.
-            Silence zones include hospitals, educational institutions and courts — firecrackers and loudspeakers are prohibited.
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.62rem', color: '#94a3b8', lineHeight: 1.8 }}>
-          © 2024 Maharashtra SPCB · Noise Pollution (Regulation &amp; Control) Rules 2000<br />
-          Noise complaints: <strong style={{ color: '#5a3500' }}>1800-233-3535</strong> (Toll Free) · Police noise helpline: <strong>100</strong>
+        {/* Footer */}
+        <div style={{ textAlign:'center', fontSize:'0.68rem', color:'var(--text-muted)', fontFamily:'Arial', borderTop:'1px solid var(--border)', paddingTop:'1rem', lineHeight:1.8 }}>
+          © 2026 Maharashtra State Pollution Control Board · PrithviNet Environmental Portal<br />
+          Noise Pollution (Regulation and Control) Rules, 2000. For complaints: <strong>1800-233-3535</strong> (Toll Free)
         </div>
       </div>
     </div>
