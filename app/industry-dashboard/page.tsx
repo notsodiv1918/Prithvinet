@@ -252,10 +252,22 @@ export default function IndustryDashboard() {
       <div className="live-bar">
         <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
           <span className="live-dot"/>
-          <span style={{fontSize:'0.72rem',fontWeight:'700',color:'#22c55e',fontFamily:'Arial',letterSpacing:'0.05em'}}>LIVE DATA</span>
-          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginLeft:'0.5rem'}}>Bharat Steel Works, Nagpur · Industry Compliance Portal</span>
+          <span style={{fontSize:'0.72rem',fontWeight:'700',color:'#22c55e',fontFamily:'Arial',letterSpacing:'0.05em'}}>LIVE</span>
+          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginLeft:'0.5rem'}}>
+            {portal==='air'   && 'Air emissions · AQI, SO₂, NO₂, PM2.5 · Bharat Steel Works, Nagpur'}
+            {portal==='water' && 'Water quality · pH, DO, BOD, effluent parameters · Nag River zone'}
+            {portal==='noise' && 'Noise levels · Day/Night dB(A) · Butibori MIDC, Nagpur'}
+            {!portal           && 'Bharat Steel Works, Nagpur · Industry Compliance Portal'}
+          </span>
         </div>
-        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial'}}>Industry User Portal</div>
+        <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
+          {portal && (
+            <span style={{fontSize:'0.65rem',fontWeight:'700',color:activeP?.accent,fontFamily:'Arial',background:`${activeP?.accent}15`,padding:'0.1rem 0.55rem',borderRadius:'3px',border:`1px solid ${activeP?.accent}35`}}>
+              {activeP?.icon} {activeP?.label}
+            </span>
+          )}
+          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial'}}>Industry Portal</span>
+        </div>
       </div>
       <div className="main-content">
         {!portal?(

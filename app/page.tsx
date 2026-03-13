@@ -94,19 +94,7 @@ export default function LoginPage() {
               Integrated air quality, water quality, and noise level monitoring across Maharashtra — connecting regulators, industries, and citizens.
             </p>
 
-            {/* Stats */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'0.85rem', marginBottom:'2.5rem' }}>
-              {[
-                { v:'10', l:'Air Stations', c:'#FF8C33' },
-                { v:'10', l:'Water Bodies', c:'#60a5fa' },
-                { v:'10', l:'Noise Zones',  c:'#34d399' },
-              ].map(s => (
-                <div key={s.l} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'6px', padding:'0.85rem 0.75rem', textAlign:'center' }}>
-                  <div style={{ fontSize:'1.6rem', fontWeight:'800', color:s.c, fontFamily:'Georgia', lineHeight:1 }}>{s.v}</div>
-                  <div style={{ fontSize:'0.62rem', color:'#94a3b8', fontFamily:'Arial', marginTop:'0.2rem', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.l}</div>
-                </div>
-              ))}
-            </div>
+
 
             {/* Public portals */}
             <div style={{ fontSize:'0.68rem', color:'#7b8fba', textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:'Arial', marginBottom:'0.75rem' }}>Public Access — No Login Required</div>
@@ -180,7 +168,7 @@ export default function LoginPage() {
             )}
             <button type="submit" disabled={loading} className="btn-primary"
               style={{ width:'100%', padding:'0.75rem', fontSize:'0.88rem', borderRadius:'4px', display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem' }}>
-              {loading ? '⏳ Verifying...' : '🔐 Sign In to Portal'}
+              {loading ? ' Verifying...' : ' Sign In to Portal'}
             </button>
           </form>
 

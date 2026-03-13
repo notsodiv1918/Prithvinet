@@ -1,5 +1,5 @@
 'use client';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { getUser, logout } from '@/lib/auth';
 import { useEffect, useState } from 'react';
 
@@ -7,71 +7,44 @@ type Portal = 'air' | 'water' | 'noise' | null;
 const key = (email: string) => `pvportal_${email}`;
 
 const DOMAINS = [
-  { k: 'air'   as const, icon: '💨', name: 'Air Quality',   sub: 'AQI · SO₂ · PM2.5',  activeClass: 'active-air',   accent: '#1a6b3a' },
-  { k: 'water' as const, icon: '💧', name: 'Water Quality', sub: 'pH · DO · BOD',       activeClass: 'active-water', accent: '#1a5280' },
-  { k: 'noise' as const, icon: '🔊', name: 'Noise Levels',  sub: 'Day · Night dB(A)',   activeClass: 'active-noise', accent: '#5a3500' },
+  {
+    k:           'air'   as const,
+    icon:        '💨',
+    label:       'Air Pollution',
+    sub:         'AQI · SO₂ · NO₂ · PM2.5',
+    accent:      '#1a6b3a',
+    activeBg:    '#f0f8f3',
+    activeBorder:'#1a6b3a',
+    activeClass: 'active-air',
+  },
+  {
+    k:           'water' as const,
+    icon:        '💧',
+    label:       'Water Pollution',
+    sub:         'pH · DO · BOD · Turbidity',
+    accent:      '#1a5280',
+    activeBg:    '#f0f5ff',
+    activeBorder:'#1a5280',
+    activeClass: 'active-water',
+  },
+  {
+    k:           'noise' as const,
+    icon:        '🔊',
+    label:       'Noise Pollution',
+    sub:         'Day · Night dB(A) · Zones',
+    accent:      '#5a3500',
+    activeBg:    '#fff8ee',
+    activeBorder:'#5a3500',
+    activeClass: 'active-noise',
+  },
 ];
-
-const SUB_NAV: Record<string, Record<string, { href: string; label: string; icon: string; badge?: number }[]>> = {
-  'Super Admin': {
-    air: [
-      { href: '/dashboard', label: 'Overview', icon: '⊞' },
-      { href: '/map', label: 'Pollution Map', icon: '◎' },
-      { href: '/alerts', label: 'Alerts & Notices', icon: '⚐', badge: 3 },
-      { href: '/reports', label: 'Industry Reports', icon: '☰' },
-      { href: '/forecast', label: 'AQI Forecast', icon: '◈' },
-      { href: '/chat', label: 'Messages', icon: '✉', badge: 2 },
-    ],
-    water: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }, { href: '/chat', label: 'Messages', icon: '✉', badge: 2 }],
-    noise: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }, { href: '/chat', label: 'Messages', icon: '✉', badge: 2 }],
-  },
-  'Regional Officer': {
-    air: [
-      { href: '/dashboard', label: 'Overview', icon: '⊞' },
-      { href: '/map', label: 'Pollution Map', icon: '◎' },
-      { href: '/alerts', label: 'Alerts & Actions', icon: '⚐', badge: 3 },
-      { href: '/chat', label: 'Messages', icon: '✉', badge: 1 },
-    ],
-    water: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }, { href: '/chat', label: 'Messages', icon: '✉', badge: 1 }],
-    noise: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }, { href: '/chat', label: 'Messages', icon: '✉', badge: 1 }],
-  },
-  'Industry User': {
-    air: [
-      { href: '/industry-dashboard', label: 'My Dashboard', icon: '⊞' },
-      { href: '/submit', label: 'Submit Report', icon: '✎' },
-      { href: '/industry-reports', label: 'Past Reports', icon: '☰' },
-      { href: '/industry-forecast', label: 'AQI Forecast', icon: '◈' },
-      { href: '/industry-alerts', label: 'My Alerts', icon: '⚐', badge: 2 },
-    ],
-    water: [
-      { href: '/industry-dashboard', label: 'My Dashboard', icon: '⊞' },
-      { href: '/submit', label: 'Submit Report', icon: '✎' },
-      { href: '/industry-reports', label: 'Past Reports', icon: '☰' },
-    ],
-    noise: [
-      { href: '/industry-dashboard', label: 'My Dashboard', icon: '⊞' },
-      { href: '/submit', label: 'Submit Report', icon: '✎' },
-      { href: '/industry-reports', label: 'Past Reports', icon: '☰' },
-    ],
-  },
-  'Monitoring Team': {
-    air: [
-      { href: '/dashboard', label: 'Overview', icon: '⊞' },
-      { href: '/map', label: 'Pollution Map', icon: '◎' },
-      { href: '/alerts', label: 'Alerts', icon: '⚐' },
-      { href: '/forecast', label: 'Forecast', icon: '◈' },
-    ],
-    water: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }],
-    noise: [{ href: '/dashboard', label: 'Overview', icon: '⊞' }],
-  },
-};
 
 export default function LeftSidebar() {
   const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+  const [user,   setUser]   = useState<any>(null);
   const [portal, setPortal] = useState<Portal>(null);
 
+  // Hydrate from localStorage on mount
   useEffect(() => {
     const u = getUser();
     if (!u) { router.push('/'); return; }
@@ -80,56 +53,124 @@ export default function LeftSidebar() {
     if (saved) setPortal(saved);
   }, []);
 
+  // Keep in sync with other components that fire pvPortalChange
   useEffect(() => {
     const h = (e: Event) => setPortal((e as CustomEvent).detail as Portal);
     window.addEventListener('pvPortalChange', h);
     return () => window.removeEventListener('pvPortalChange', h);
   }, []);
 
-  const handleDomainClick = (p: 'air' | 'water' | 'noise') => {
+  const selectDomain = (p: 'air' | 'water' | 'noise') => {
     // Toggle off if clicking same domain
     const next = portal === p ? null : p;
     setPortal(next);
     if (user) {
       if (next) localStorage.setItem(key(user.email), next);
-      else localStorage.removeItem(key(user.email));
+      else       localStorage.removeItem(key(user.email));
     }
     window.dispatchEvent(new CustomEvent('pvPortalChange', { detail: next }));
   };
 
-  const roleNavs = user ? (SUB_NAV[user.role] || SUB_NAV['Monitoring Team']) : {};
-  const navItems = portal ? (roleNavs[portal] || []) : [];
-  const activeDomain = DOMAINS.find(d => d.k === portal);
+  const handleLogout = () => {
+    if (user) localStorage.removeItem(key(user.email));
+    logout();
+    router.push('/');
+  };
 
   return (
     <aside className="left-sidebar">
-      {/* User info at top */}
+
+      {/* ── User info ── */}
       {user && (
-        <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--navy)' }}>
-          <div style={{ fontSize: '0.6rem', color: '#7b8fba', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial', marginBottom: '0.25rem' }}>{user.role}</div>
-          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'white', fontFamily: 'Arial' }}>{user.name}</div>
-          {user.district && <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: 'Arial', marginTop: '0.1rem' }}>📍 Zone: {user.district}</div>}
+        <div style={{
+          padding: '0.9rem 1rem',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--navy)',
+          flexShrink: 0,
+        }}>
+          <div style={{ fontSize:'0.58rem', color:'#7b8fba', textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:'Arial', marginBottom:'0.2rem' }}>
+            {user.role}
+          </div>
+          <div style={{ fontSize:'0.85rem', fontWeight:'700', color:'white', fontFamily:'Arial' }}>
+            {user.name}
+          </div>
+          {user.district && (
+            <div style={{ fontSize:'0.63rem', color:'#94a3b8', fontFamily:'Arial', marginTop:'0.15rem' }}>
+              📍 Zone: {user.district}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Domain selector label */}
-      <div className="sidebar-section-title" style={{ marginTop: '0.25rem' }}>Select Domain</div>
+      {/* ── Domain selector label ── */}
+      <div style={{
+        fontSize: '0.6rem',
+        fontWeight: '700',
+        color: 'var(--text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        fontFamily: 'Arial',
+        padding: '0.65rem 1rem 0.35rem',
+      }}>
+        Monitoring Domain
+      </div>
 
-      {/* 3 domain cards */}
-      <div style={{ padding: '0 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      {/* ── Three domain cards ── */}
+      <div style={{ display:'flex', flexDirection:'column', gap:'3px', padding:'0 0.5rem' }}>
         {DOMAINS.map(d => {
           const isActive = portal === d.k;
           return (
-            <button key={d.k} onClick={() => handleDomainClick(d.k)}
-              className={`portal-domain-card${isActive ? ' ' + d.activeClass : ''}`}
-              style={{ borderColor: isActive ? d.accent : 'var(--border)' }}>
-              <span className="domain-icon">{d.icon}</span>
-              <div style={{ flex: 1 }}>
-                <div className="domain-name" style={{ color: isActive ? d.accent : 'var(--text-dark)' }}>{d.name}</div>
-                <div className="domain-sub">{d.sub}</div>
+            <button
+              key={d.k}
+              onClick={() => selectDomain(d.k)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '0.7rem 0.75rem',
+                border: `1.5px solid ${isActive ? d.activeBorder : 'var(--border)'}`,
+                borderRadius: '5px',
+                background: isActive ? d.activeBg : 'white',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                transition: 'all 0.12s',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--light-gray)';
+              }}
+              onMouseLeave={e => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = 'white';
+              }}
+            >
+              {/* Domain icon */}
+              <span style={{ fontSize:'1.4rem', flexShrink:0 }}>{d.icon}</span>
+
+              {/* Label + sub-label */}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{
+                  fontSize: '0.78rem',
+                  fontWeight: '700',
+                  color: isActive ? d.accent : 'var(--text-dark)',
+                  fontFamily: 'Arial',
+                  lineHeight: 1.2,
+                }}>
+                  {d.label}
+                </div>
+                <div style={{
+                  fontSize: '0.58rem',
+                  color: isActive ? d.accent : 'var(--text-muted)',
+                  fontFamily: 'Arial',
+                  marginTop: '0.15rem',
+                  opacity: isActive ? 0.8 : 1,
+                }}>
+                  {d.sub}
+                </div>
               </div>
+
+              {/* Active indicator star */}
               {isActive && (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill={d.accent}>
+                <svg width="12" height="12" viewBox="0 0 14 14" fill={d.accent} style={{ flexShrink:0 }}>
                   <path d="M7 0L9 5H14L10 8L12 13L7 10L2 13L4 8L0 5H5Z"/>
                 </svg>
               )}
@@ -138,38 +179,57 @@ export default function LeftSidebar() {
         })}
       </div>
 
-      {/* Sub-nav when domain chosen */}
-      {portal && navItems.length > 0 && (
-        <>
-          <div className="sidebar-divider" style={{ marginTop: '0.75rem' }}/>
-          <div className="sidebar-section-title" style={{ color: activeDomain?.accent }}>
-            {activeDomain?.icon} {activeDomain?.name} Menu
+      {/* ── Active domain info strip ── */}
+      {portal && (() => {
+        const d = DOMAINS.find(x => x.k === portal)!;
+        return (
+          <div style={{
+            margin: '0.75rem 0.5rem 0',
+            padding: '0.5rem 0.75rem',
+            background: d.activeBg,
+            border: `1px solid ${d.activeBorder}30`,
+            borderLeft: `3px solid ${d.accent}`,
+            borderRadius: '4px',
+          }}>
+            <div style={{ fontSize:'0.62rem', color:d.accent, fontWeight:'700', fontFamily:'Arial', letterSpacing:'0.04em' }}>
+              {d.icon} {d.label.toUpperCase()} SELECTED
+            </div>
+            <div style={{ fontSize:'0.58rem', color:d.accent, fontFamily:'Arial', marginTop:'0.15rem', opacity:0.8, lineHeight:1.5 }}>
+              Use the top navigation bar to switch between Dashboard, Map, Alerts, Reports, Forecast and Messages.
+            </div>
           </div>
-          <nav style={{ paddingBottom: '0.5rem' }}>
-            {navItems.map(item => {
-              const active = pathname === item.href;
-              return (
-                <button key={item.href + item.label} onClick={() => router.push(item.href)}
-                  className={`sidebar-nav-item${active ? ' active' : ''}`}
-                  style={active ? { borderLeftColor: activeDomain?.accent, background: `${activeDomain?.accent}12`, color: activeDomain?.accent } : {}}>
-                  <span className="icon">{item.icon}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.badge && <span className="badge">{item.badge}</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </>
+        );
+      })()}
+
+      {/* ── No domain selected hint ── */}
+      {!portal && (
+        <div style={{
+          margin: '0.75rem 0.5rem 0',
+          padding: '0.5rem 0.75rem',
+          background: 'var(--light-gray)',
+          border: '1px dashed var(--border)',
+          borderRadius: '4px',
+        }}>
+          <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', fontFamily:'Arial', lineHeight:1.6 }}>
+            Select a domain above to load its monitoring data in the main area.
+          </div>
+        </div>
       )}
 
-      {/* Spacer + logout at bottom */}
-      <div style={{ flex: 1 }} />
-      <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border)' }}>
-        <button onClick={() => { if (user) localStorage.removeItem(key(user.email)); logout(); router.push('/'); }}
-          className="btn-outline" style={{ width: '100%', fontSize: '0.72rem', padding: '0.35rem' }}>
+      {/* ── Spacer ── */}
+      <div style={{ flex:1 }} />
+
+      {/* ── Sign out ── */}
+      <div style={{ padding:'0.75rem 0.75rem', borderTop:'1px solid var(--border)', flexShrink:0 }}>
+        <button
+          onClick={handleLogout}
+          className="btn-outline"
+          style={{ width:'100%', fontSize:'0.72rem', padding:'0.38rem' }}
+        >
           Sign Out
         </button>
       </div>
+
     </aside>
   );
 }

@@ -436,7 +436,9 @@ export default function Dashboard() {
     return () => window.removeEventListener('pvPortalChange', h);
   }, []);
 
+  // Air-only live simulation — only active when air portal is selected
   useEffect(() => {
+    if (portal !== 'air') return;
     const t = setInterval(() => {
       setLiveData(prev => prev.map(s => ({
         ...s,
@@ -445,9 +447,16 @@ export default function Dashboard() {
       })));
     }, 5000);
     return () => clearInterval(t);
-  }, []);
+  }, [portal]);
 
   const activeP = portal ? PORTAL_META[portal] : null;
+
+  // Live bar context changes based on active domain — no cross-module data shown
+  const liveBarText: Record<string, string> = {
+    air:   'Air quality · AQI, SO₂, NO₂, PM2.5 · CAAQMS stations · Updates every 5s',
+    water: 'Water quality · pH, DO, BOD, turbidity, coliform · River & reservoir network',
+    noise: 'Noise levels · Day/Night dB(A) · Urban & industrial zone monitoring',
+  };
 
   return (
     <PageShell loading={!mounted||!user}>
@@ -460,10 +469,19 @@ export default function Dashboard() {
       <div className="live-bar">
         <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
           <span className="live-dot"/>
-          <span style={{fontSize:'0.72rem',fontWeight:'700',color:'#22c55e',fontFamily:'Arial',letterSpacing:'0.05em'}}>LIVE DATA</span>
-          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginLeft:'0.5rem'}}>Refreshes every 5 seconds · Maharashtra SPCB Monitoring Network</span>
+          <span style={{fontSize:'0.72rem',fontWeight:'700',color:'#22c55e',fontFamily:'Arial',letterSpacing:'0.05em'}}>LIVE</span>
+          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial',marginLeft:'0.5rem'}}>
+            {portal ? liveBarText[portal] : 'Maharashtra SPCB Environmental Monitoring Network'}
+          </span>
         </div>
-        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial'}}>{user?.role} Portal</div>
+        <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
+          {portal && (
+            <span style={{fontSize:'0.65rem',fontWeight:'700',color:activeP?.accent,fontFamily:'Arial',background:`${activeP?.accent}15`,padding:'0.1rem 0.55rem',borderRadius:'3px',border:`1px solid ${activeP?.accent}35`}}>
+              {activeP?.icon} {activeP?.label}
+            </span>
+          )}
+          <span style={{fontSize:'0.7rem',color:'var(--text-muted)',fontFamily:'Arial'}}>{user?.role}</span>
+        </div>
       </div>
       <div className="main-content">
         {!portal?(
