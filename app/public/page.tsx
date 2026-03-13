@@ -1,217 +1,230 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { STATIONS } from '@/data/mockData';
+import { useState } from 'react';
+import CitizenPageHeader from '@/components/CitizenPageHeader';
+import CitizenPollutionMap, { MapStation } from '@/components/CitizenPollutionMap';
+import LocationDetailsCard, { Precaution } from '@/components/LocationDetailsCard';
+import PollutionMetrics, { Metric } from '@/components/PollutionMetrics';
+import { AIR_STATIONS, airColor, airRadius } from '@/data/citizenMapData';
 
-export default function PublicPage() {
-  const [time, setTime] = useState('');
-  useEffect(() => {
-    const update = () => setTime(new Date().toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' }));
-    update();
-    const t = setInterval(update, 60000);
-    return () => clearInterval(t);
-  }, []);
+// ── helpers ──────────────────────────────────────────────────────────────────
+function aqiLabel(aqi: number) {
+  if (aqi <= 50)  return { label: 'Good',                   bg: '#d4edda', color: '#16a34a' };
+  if (aqi <= 100) return { label: 'Moderate',               bg: '#fef3c7', color: '#ca8a04' };
+  if (aqi <= 150) return { label: 'Unhealthy for Sensitive',bg: '#fde9d9', color: '#ea580c' };
+  if (aqi <= 200) return { label: 'Unhealthy',              bg: '#fef0e6', color: '#ea580c' };
+  if (aqi <= 300) return { label: 'Very Unhealthy',         bg: '#fdf0ee', color: '#c0392b' };
+  return               { label: 'Hazardous',                bg: '#f8d7da', color: '#991b1b' };
+}
 
-  const breaches = STATIONS.filter(s => s.status === 'breach');
-  const avgAqi   = Math.round(STATIONS.reduce((a, s) => a + s.aqi, 0) / STATIONS.length);
-
-  const getAqiInfo = (aqi: number) => {
-    if (aqi <= 50)  return { label:'Good',                      color:'#1a6b3a', bg:'#d4edda' };
-    if (aqi <= 100) return { label:'Moderate',                  color:'#856404', bg:'#fff3cd' };
-    if (aqi <= 150) return { label:'Unhealthy for Sensitive',   color:'#c0550a', bg:'#fde9d9' };
-    if (aqi <= 200) return { label:'Unhealthy',                 color:'#d4680a', bg:'#fef0e6' };
-    if (aqi <= 300) return { label:'Very Unhealthy',            color:'#c0392b', bg:'#fdf0ee' };
-    return               { label:'Hazardous',                   color:'#7b1a1a', bg:'#f8d7da' };
-  };
-
-  const overall = getAqiInfo(avgAqi);
-  const NEWS = [
-    '🔴 LIVE: Bharat Steel Works SO₂ at 142 ppm — Limit 80 ppm — Inspection Ordered',
-    '⚠ Nag River Nagpur water quality CRITICAL — Immediate action required by MPCB',
-    '📋 Monthly compliance reports due 31 March 2026 — All industries must submit',
-    '✅ Godavari River Nashik maintaining GOOD quality for 6th consecutive month',
-    '📡 New monitoring station commissioned at Aurangabad MIDC — Real-time data now available',
+function airPrecautions(status: string): Precaution[] {
+  if (status === 'good') return [
+    { icon: '✅', text: 'Air quality is good. Enjoy outdoor activities.' },
+    { icon: '🌿', text: 'Good time for jogging, cycling or outdoor sports.' },
   ];
-  const tickerFull = [...NEWS, ...NEWS].join('   ◆   ');
+  if (status === 'moderate') return [
+    { icon: '😷', text: 'Unusually sensitive people should consider reducing prolonged outdoor exertion.' },
+    { icon: '🏠', text: 'Keep windows closed during peak traffic hours (7–10 AM, 5–8 PM).' },
+    { icon: '🌬', text: 'Watch for symptoms like coughing or throat irritation.' },
+  ];
+  if (status === 'poor') return [
+    { icon: '😷', text: 'Wear an N95 mask when outdoors.' },
+    { icon: '🏠', text: 'Keep windows and doors closed. Use air purifiers if available.' },
+    { icon: '🧒', text: 'Children, elderly and those with respiratory conditions must stay indoors.' },
+    { icon: '🚴', text: 'Avoid prolonged outdoor exercise and heavy physical activity.' },
+    { icon: '🏥', text: 'If you feel breathless or develop chest tightness, seek medical attention.' },
+  ];
+  // hazardous
+  return [
+    { icon: '🚨', text: 'HEALTH EMERGENCY — Stay indoors. Keep all windows and doors shut.' },
+    { icon: '😷', text: 'If you must go outside, wear a properly fitted N95 or N99 respirator.' },
+    { icon: '🧒', text: 'Children, elderly and sick must NOT go outside under any circumstances.' },
+    { icon: '🏥', text: 'Anyone with breathing difficulties should contact emergency services: 112.' },
+    { icon: '📞', text: 'MPCB Helpline: 1800-233-3535 (Toll Free).' },
+  ];
+}
+
+const LEGEND = [
+  { color: '#16a34a', label: 'Good',        description: 'AQI 0 – 50'   },
+  { color: '#ca8a04', label: 'Moderate',    description: 'AQI 51 – 100' },
+  { color: '#ea580c', label: 'Unhealthy',   description: 'AQI 101 – 200'},
+  { color: '#991b1b', label: 'Hazardous',   description: 'AQI 200+'     },
+];
+
+export default function PublicAirPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId ? AIR_STATIONS.find(s => s.id === selectedId) : null;
+
+  // Overall state
+  const totalBreaches = AIR_STATIONS.filter(s => s.status === 'poor' || s.status === 'hazardous').length;
+  const avgAqi = Math.round(AIR_STATIONS.reduce((a, s) => a + s.aqi, 0) / AIR_STATIONS.length);
+  const avgInfo = aqiLabel(avgAqi);
+
+  // Build MapStation[] — shared map contract
+  const mapStations: MapStation[] = AIR_STATIONS.map(s => ({
+    id:          s.id,
+    lat:         s.lat,
+    lng:         s.lng,
+    color:       airColor(s.status),
+    outerColor:  airColor(s.status),
+    radius:      airRadius(s.aqi),
+    innerRadius: 6000,
+    label:       s.name,
+    statusLabel: aqiLabel(s.aqi).label,
+  }));
+
+  // Selected station detail data
+  const selInfo     = selected ? aqiLabel(selected.aqi) : null;
+  const selMetrics: Metric[] = selected ? [
+    { label: 'AQI',   value: selected.aqi,  unit: '',      limit: '100',  isBreached: selected.aqi > 100 },
+    { label: 'PM2.5', value: selected.pm25, unit: 'µg/m³', limit: '60',   isBreached: selected.pm25 > 60 },
+    { label: 'PM10',  value: selected.pm10, unit: 'µg/m³', limit: '100',  isBreached: selected.pm10 > 100 },
+    { label: 'NO₂',   value: selected.no2,  unit: 'ppb',   limit: '60',   isBreached: selected.no2 > 60 },
+    { label: 'SO₂',   value: selected.so2,  unit: 'ppb',   limit: '80',   isBreached: selected.so2 > 80 },
+    { label: 'Ozone', value: selected.o3,   unit: 'ppb',   limit: '70',   isBreached: selected.o3 > 70 },
+  ] : [];
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--light-gray)', display:'flex', flexDirection:'column' }}>
+    <div style={{ minHeight: '100vh', background: '#f0f2f5', display: 'flex', flexDirection: 'column', fontFamily: 'Arial, sans-serif' }}>
+      <CitizenPageHeader activeTab="air" stationCount={AIR_STATIONS.length} />
 
-      {/* Tricolour */}
-      <div style={{ height:'5px', background:'linear-gradient(to right,#FF6B00 33.33%,#FFFFFF 33.33% 66.66%,#138808 66.66%)' }} />
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.25rem 1.5rem', width: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-      {/* Ticker */}
-      <div style={{ background:'var(--navy)', height:'32px', display:'flex', alignItems:'center', overflow:'hidden' }}>
-        <div style={{ background:'#FF6B00', color:'white', fontSize:'0.62rem', fontWeight:'700', letterSpacing:'0.1em', textTransform:'uppercase', padding:'0 0.85rem', height:'100%', display:'flex', alignItems:'center', flexShrink:0, fontFamily:'Arial' }}>LATEST</div>
-        <div style={{ flex:1, overflow:'hidden' }}>
-          <div style={{ whiteSpace:'nowrap', animation:'ticker-scroll 35s linear infinite', color:'#c8d4e8', fontSize:'0.7rem', fontFamily:'Arial', display:'inline-block' }}>
-            {tickerFull}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tickerFull}
-          </div>
-        </div>
-        <div style={{ background:'rgba(255,255,255,0.06)', borderLeft:'1px solid rgba(255,255,255,0.1)', padding:'0 0.85rem', height:'100%', display:'flex', alignItems:'center', gap:'0.5rem', flexShrink:0 }}>
-          <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#22c55e', animation:'pulse-dot 2s infinite' }} />
-          <span style={{ fontSize:'0.65rem', color:'#22c55e', fontWeight:'700', fontFamily:'Arial' }}>LIVE</span>
-        </div>
-        <style>{`
-          @keyframes ticker-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-          @keyframes pulse-dot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{opacity:.8;box-shadow:0 0 0 5px rgba(34,197,94,0)} }
-        `}</style>
-      </div>
-
-      {/* Site header */}
-      <div style={{ background:'white', borderBottom:'2px solid var(--border)', padding:'0.85rem 2rem', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'1.1rem' }}>
-          <img src="/logo.jpeg" alt="PrithviNet" style={{ height:'60px', width:'auto' }} />
-          <div style={{ borderLeft:'2px solid var(--border)', paddingLeft:'1rem' }}>
-            <div style={{ fontSize:'1.05rem', fontWeight:'800', color:'var(--navy)', fontFamily:'Georgia' }}>PRITHVINET</div>
-            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontFamily:'Arial', marginTop:'0.1rem' }}>Public Air Quality Portal</div>
-            <div style={{ fontSize:'0.62rem', color:'#94a3b8', fontFamily:'Arial' }}>Maharashtra State Pollution Control Board</div>
-          </div>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
-          <div style={{ textAlign:'right', fontFamily:'Arial' }}>
-            <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>Data updated: {time}</div>
-            <div style={{ fontSize:'0.6rem', color:'#94a3b8', marginTop:'0.1rem' }}>Refreshes every 60 seconds</div>
-          </div>
-          <a href="/" style={{ background:'var(--navy)', color:'white', fontSize:'0.72rem', fontFamily:'Arial', fontWeight:'600', padding:'0.38rem 0.85rem', borderRadius:'3px', textDecoration:'none' }}>
-            🔐 Staff Login
-          </a>
-        </div>
-      </div>
-
-      {/* Nav links to other public portals */}
-      <div style={{ background:'var(--navy)', display:'flex', alignItems:'center', height:'38px', padding:'0 1.5rem', gap:'0' }}>
-        {[
-          { href:'/public',       label:'💨 Air Quality',   active:true  },
-          { href:'/public-water', label:'💧 Water Quality', active:false },
-          { href:'/public-noise', label:'🔊 Noise Levels',  active:false },
-        ].map(item => (
-          <a key={item.href} href={item.href}
-            style={{ display:'flex', alignItems:'center', padding:'0 1rem', height:'100%', color:item.active?'white':'#94a3b8', fontSize:'0.78rem', fontFamily:'Arial', fontWeight:item.active?'700':'500', textDecoration:'none', borderBottom:item.active?'3px solid #FF8C33':'3px solid transparent', background:item.active?'rgba(255,255,255,0.07)':'none', transition:'all 0.12s' }}>
-            {item.label}
-          </a>
-        ))}
-        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-          <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#22c55e' }} />
-          <span style={{ fontSize:'0.65rem', color:'#94a3b8', fontFamily:'Arial' }}>Real-time · {STATIONS.length} stations active</span>
-        </div>
-      </div>
-
-      <div style={{ maxWidth:'1200px', margin:'0 auto', padding:'1.5rem 2rem', width:'100%' }}>
-
-        {/* Health advisory */}
-        {breaches.length > 0 && (
-          <div className="alert-critical" style={{ marginBottom:'1.5rem', display:'flex', gap:'0.85rem', alignItems:'flex-start' }}>
-            <span style={{ fontSize:'1.3rem', flexShrink:0 }}>⚠️</span>
+        {/* ── State-wide alert banner ── */}
+        {totalBreaches > 0 && (
+          <div style={{ background: '#fdf0ee', border: '1px solid #f5c6cb', borderLeft: '4px solid #c0392b', borderRadius: '8px', padding: '0.75rem 1rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>⚠️</span>
             <div>
-              <strong style={{ fontSize:'0.85rem', color:'#721c24' }}>Health Advisory — Poor Air Quality in {breaches.length} Monitoring Zone{breaches.length>1?'s':''}</strong>
-              <div style={{ fontSize:'0.78rem', color:'#721c24', marginTop:'0.25rem', lineHeight:1.7 }}>
-                Air quality is currently <strong>Very Unhealthy</strong> in {breaches.map(s => s.district).join(', ')}.
-                Sensitive groups (elderly, children, those with respiratory conditions) should avoid outdoor activities.
-                Others should limit prolonged outdoor exertion.
+              <strong style={{ fontSize: '0.82rem', color: '#721c24' }}>Health Advisory — Poor Air Quality in {totalBreaches} zone{totalBreaches > 1 ? 's' : ''}</strong>
+              <div style={{ fontSize: '0.73rem', color: '#721c24', marginTop: '0.2rem', lineHeight: 1.6 }}>
+                {AIR_STATIONS.filter(s => s.status === 'poor' || s.status === 'hazardous').map(s => s.district).join(', ')}.
+                Sensitive groups (elderly, children, respiratory conditions) should avoid outdoor activities.
               </div>
             </div>
           </div>
         )}
 
-        {/* Maharashtra average AQI hero */}
-        <div style={{ background:'white', border:'1px solid var(--border)', borderRadius:'4px', padding:'2rem', textAlign:'center', marginBottom:'1.5rem', boxShadow:'0 1px 4px rgba(26,39,68,0.06)', borderTop:`4px solid ${overall.color}` }}>
-          <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.5rem', fontFamily:'Arial' }}>Maharashtra State Average AQI</div>
-          <div style={{ fontSize:'5.5rem', fontWeight:'900', color:overall.color, lineHeight:1, fontFamily:'Georgia' }}>{avgAqi}</div>
-          <div style={{ display:'inline-block', background:overall.bg, color:overall.color, fontSize:'0.88rem', fontWeight:'700', fontFamily:'Arial', padding:'0.3rem 1.2rem', borderRadius:'20px', marginTop:'0.5rem', border:`1px solid ${overall.color}40` }}>
-            {overall.label}
-          </div>
-          <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:'0.6rem', fontFamily:'Arial' }}>
-            Based on {STATIONS.length} monitoring stations across Maharashtra
-          </div>
-        </div>
+        {/* ── Two-column layout: map left, info right ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.25rem', alignItems: 'start' }}>
 
-        {/* Station grid */}
-        <div style={{ fontSize:'0.7rem', fontWeight:'700', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.85rem', fontFamily:'Arial' }}>
-          Air Quality by Location — All Stations
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(215px,1fr))', gap:'0.85rem', marginBottom:'1.75rem' }}>
-          {STATIONS.map(s => {
-            const info = getAqiInfo(s.aqi);
-            return (
-              <div key={s.id} style={{ background:'white', border:`1px solid ${s.status==='breach'?'#f5c6cb':s.status==='warning'?'#ffd966':'#dde2ec'}`, borderTop:`3px solid ${info.color}`, borderRadius:'4px', padding:'1rem', boxShadow:'0 1px 3px rgba(26,39,68,0.06)' }}>
-                <div style={{ fontSize:'0.88rem', fontWeight:'700', color:'var(--navy)', fontFamily:'Georgia', marginBottom:'0.1rem' }}>{s.district}</div>
-                <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontFamily:'Arial', marginBottom:'0.75rem' }}>{s.name}</div>
-                <div style={{ display:'flex', alignItems:'baseline', gap:'0.4rem', marginBottom:'0.2rem' }}>
-                  <span style={{ fontSize:'2.4rem', fontWeight:'800', color:info.color, lineHeight:1, fontFamily:'Georgia' }}>{s.aqi}</span>
-                  <span style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontFamily:'Arial' }}>AQI</span>
+          {/* MAP — primary element */}
+          <div>
+            {/* State average hero above map */}
+            <div style={{ background: 'white', borderRadius: '10px 10px 0 0', padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f2f5', boxShadow: '0 1px 4px rgba(26,39,68,0.06)' }}>
+              <div>
+                <div style={{ fontSize: '0.6rem', color: '#6b7a96', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.2rem' }}>Maharashtra Average AQI</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '2.4rem', fontWeight: '900', color: avgInfo.color, fontFamily: 'Georgia', lineHeight: 1 }}>{avgAqi}</span>
+                  <span style={{ background: avgInfo.bg, color: avgInfo.color, fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.75rem', borderRadius: '20px', border: `1px solid ${avgInfo.color}40` }}>{avgInfo.label}</span>
                 </div>
-                <div style={{ display:'inline-block', background:info.bg, color:info.color, fontSize:'0.65rem', fontWeight:'700', fontFamily:'Arial', padding:'1px 8px', borderRadius:'2px', marginBottom:'0.65rem', textTransform:'uppercase', letterSpacing:'0.04em' }}>
-                  {info.label}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.62rem', color: '#6b7a96' }}>Based on {AIR_STATIONS.length} stations</div>
+                <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '0.1rem' }}>Tap any circle on map for details →</div>
+              </div>
+            </div>
+
+            <CitizenPollutionMap
+              stations={mapStations}
+              center={[19.3, 76.5]}
+              zoom={6}
+              onSelect={setSelectedId}
+              selectedId={selectedId}
+              height="440px"
+              legendItems={LEGEND}
+              domain="air"
+            />
+          </div>
+
+          {/* RIGHT PANEL — changes when station selected */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {selected && selInfo ? (
+              <>
+                <LocationDetailsCard
+                  name={selected.name}
+                  district={selected.district}
+                  statusLabel={selInfo.label}
+                  statusColor={selInfo.color}
+                  statusBg={selInfo.bg}
+                  lastUpdated={selected.updated}
+                  precautions={airPrecautions(selected.status)}
+                  domain="air"
+                  onClose={() => setSelectedId(null)}
+                />
+                <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 8px rgba(26,39,68,0.08)' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#6b7a96', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+                    📊 Pollutant Readings
+                  </div>
+                  <PollutionMetrics metrics={selMetrics} accentColor={selInfo.color} />
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.3rem' }}>
-                  {[['SO₂',s.so2,'ppm'],['NO₂',s.no2,'ppm']].map(([k,v,u]) => (
-                    <div key={String(k)} style={{ background:'var(--light-gray)', borderRadius:'3px', padding:'0.3rem 0.45rem', border:'1px solid var(--border)' }}>
-                      <div style={{ fontSize:'0.58rem', color:'var(--text-muted)', fontFamily:'Arial' }}>{k}</div>
-                      <div style={{ fontSize:'0.82rem', fontWeight:'700', color:'var(--text-dark)', fontFamily:'Georgia' }}>
-                        {v} <span style={{ fontSize:'0.6rem', color:'var(--text-muted)', fontWeight:400 }}>{u}</span>
-                      </div>
+              </>
+            ) : (
+              <>
+                {/* Default: AQI scale guide */}
+                <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 8px rgba(26,39,68,0.08)' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#6b7a96', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.7rem' }}>📊 AQI Scale</div>
+                  {[
+                    ['0–50',   'Good',          '#16a34a', '#d4edda', 'No health risk'],
+                    ['51–100', 'Moderate',      '#ca8a04', '#fef3c7', 'Sensitive groups take care'],
+                    ['101–200','Unhealthy',     '#ea580c', '#fde9d9', 'Limit outdoor activity'],
+                    ['201–300','Very Unhealthy','#c0392b', '#fdf0ee', 'Avoid all outdoor activity'],
+                    ['300+',   'Hazardous',     '#991b1b', '#f8d7da', 'Stay indoors — emergency'],
+                  ].map(([range, label, color, bg]) => (
+                    <div key={range} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.5rem', borderRadius: '5px', marginBottom: '0.25rem', background: bg }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color, minWidth: '50px' }}>{range}</span>
+                      <span style={{ fontSize: '0.7rem', color: '#1a2744', fontWeight: '600' }}>{label}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-            );
-          })}
-        </div>
 
-        {/* AQI scale guide */}
-        <div className="section-card" style={{ marginBottom:'1.5rem' }}>
-          <div className="section-title">📊 AQI Scale Guide</div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'0.6rem' }}>
-            {[
-              ['0 – 50',   'Good',                    '#1a6b3a', '#d4edda', 'No health impact'],
-              ['51 – 100', 'Moderate',                '#856404', '#fff3cd', 'Sensitive groups take care'],
-              ['101 – 200','Unhealthy',               '#d4680a', '#fef0e6', 'Limit outdoor activity'],
-              ['201 – 300','Very Unhealthy',          '#c0392b', '#fdf0ee', 'Avoid outdoor activity'],
-              ['300+',     'Hazardous',               '#7b1a1a', '#f8d7da', 'Stay indoors'],
-            ].map(([range,label,color,bg,advice]) => (
-              <div key={range} style={{ background:bg, borderRadius:'4px', padding:'0.7rem 0.85rem', borderLeft:`3px solid ${color}` }}>
-                <div style={{ fontSize:'0.78rem', fontWeight:'700', color, fontFamily:'Georgia' }}>{range}</div>
-                <div style={{ fontSize:'0.78rem', fontWeight:'600', color:'var(--text-dark)', fontFamily:'Arial', margin:'0.1rem 0' }}>{label}</div>
-                <div style={{ fontSize:'0.65rem', color:'var(--text-muted)', fontFamily:'Arial' }}>{advice}</div>
-              </div>
-            ))}
+                {/* Quick station list */}
+                <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 8px rgba(26,39,68,0.08)', maxHeight: '280px', overflowY: 'auto' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#6b7a96', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem' }}>All Stations</div>
+                  {AIR_STATIONS.map(s => {
+                    const info = aqiLabel(s.aqi);
+                    return (
+                      <button key={s.id} onClick={() => setSelectedId(s.id)}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.5rem', borderRadius: '5px', border: '1px solid transparent', background: 'transparent', cursor: 'pointer', marginBottom: '0.2rem', textAlign: 'left', transition: 'all 0.1s' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f0f2f5'}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: info.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.73rem', color: '#1a2744', flex: 1, fontFamily: 'Arial' }}>{s.district}</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: '800', color: info.color, fontFamily: 'Georgia' }}>{s.aqi}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Health tips */}
-        <div className="section-card" style={{ borderLeft:'4px solid var(--accent-green)', background:'#f0f8f3', marginBottom:'1.5rem' }}>
-          <div className="section-title" style={{ color:'var(--accent-green)' }}>💡 Public Health Advisory</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem', fontSize:'0.78rem', color:'var(--text-mid)', fontFamily:'Arial', lineHeight:1.8 }}>
-            <div>
-              <div style={{ fontWeight:'700', color:'var(--accent-green)', marginBottom:'0.3rem' }}>When AQI is above 150:</div>
-              <ul style={{ paddingLeft:'1.2rem' }}>
-                <li>Reduce outdoor physical activity</li>
-                <li>Keep windows closed indoors</li>
-                <li>Use N95 masks if going outside</li>
-                <li>Children and elderly should stay indoors</li>
-              </ul>
-            </div>
-            <div>
-              <div style={{ fontWeight:'700', color:'var(--accent-green)', marginBottom:'0.3rem' }}>Emergency contacts:</div>
-              <ul style={{ paddingLeft:'1.2rem' }}>
-                <li>MPCB Helpline: <strong>1800-233-3535</strong> (Toll Free)</li>
-                <li>Emergency: <strong>112</strong></li>
-                <li>SPCB Website: mpcb.gov.in</li>
-                <li>Complaint portal: sampark.maharashtra.gov.in</li>
-              </ul>
-            </div>
+        {/* ── Health advice footer ── */}
+        <div style={{ background: 'white', borderRadius: '12px', padding: '1rem 1.25rem', boxShadow: '0 1px 8px rgba(26,39,68,0.08)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div>
+            <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#16a34a', marginBottom: '0.4rem' }}>💡 General Protective Actions</div>
+            <ul style={{ fontSize: '0.73rem', color: '#3d4f6b', paddingLeft: '1.1rem', lineHeight: 1.8, margin: 0 }}>
+              <li>Check AQI before outdoor activities</li>
+              <li>Use N95 masks when AQI is above 150</li>
+              <li>Keep windows closed during high pollution periods</li>
+              <li>Avoid exercising near busy roads or industrial areas</li>
+            </ul>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#1a2744', marginBottom: '0.4rem' }}>📞 Emergency Contacts</div>
+            <ul style={{ fontSize: '0.73rem', color: '#3d4f6b', paddingLeft: '1.1rem', lineHeight: 1.8, margin: 0 }}>
+              <li>MPCB Helpline: <strong>1800-233-3535</strong> (Toll Free)</li>
+              <li>Emergency Services: <strong>112</strong></li>
+              <li>SPCB: <a href="https://mpcb.gov.in" style={{ color: '#1a5280' }}>mpcb.gov.in</a></li>
+            </ul>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ textAlign:'center', fontSize:'0.68rem', color:'var(--text-muted)', fontFamily:'Arial', borderTop:'1px solid var(--border)', paddingTop:'1rem', lineHeight:1.8 }}>
-          © 2026 Maharashtra State Pollution Control Board · PrithviNet Environmental Portal<br />
-          Data sourced from CAAQMS stations across Maharashtra. For emergencies contact: <strong>1800-233-3535</strong> (Toll Free)
+        <div style={{ textAlign: 'center', fontSize: '0.62rem', color: '#94a3b8', borderTop: '1px solid #dde2ec', paddingTop: '0.75rem' }}>
+          © 2026 Maharashtra State Pollution Control Board · PrithviNet · Data from CAAQMS network
         </div>
       </div>
     </div>
   );
 }
-
-// Fallback to avoid template literal issues
-
