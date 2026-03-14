@@ -31,8 +31,6 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
 
   const tabs = [
     { key: 'air',   href: '/public',       label: '💨 Air Quality',   activeColor: '#FF8C33' },
-    { key: 'water', href: '/public-water', label: '💧 Water Quality', activeColor: '#60a5fa' },
-    { key: 'noise', href: '/public-noise', label: '🔊 Noise Levels',  activeColor: '#fbbf24' },
   ];
 
   return (

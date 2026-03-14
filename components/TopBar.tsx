@@ -20,7 +20,7 @@ export default function TopBar({ title, subtitle }: { title: string; subtitle?: 
       borderBottom: '2px solid #c8e0d2',
       padding: '0.7rem 1.5rem',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      boxShadow: '0 1px 4px rgba(26,107,58,0.07)'
+      boxShadow: '0 1px 4px rgba(71, 115, 150, 0.07)'
     }}>
       <div>
         <h1 style={{ fontSize: '1rem', fontWeight: '700', color: '#1a6b3a' }}>{title}</h1>

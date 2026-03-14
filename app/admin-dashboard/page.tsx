@@ -94,7 +94,7 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={trendData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8f5ee" />
-                  <XAxis dataKey="date" tick={{ fill: '#6b8c7a', fontSize: 10 }} />
+                  <XAxis dataKey="date" tick={{ fill: '#7d9cb8', fontSize: 10 }} />
                   <YAxis tick={{ fill: '#6b8c7a', fontSize: 10 }} />
                   <Tooltip contentStyle={{ background: 'white', border: '1px solid #c8e0d2', fontSize: '12px' }} />
                   <Legend wrapperStyle={{ fontSize: '11px' }} />

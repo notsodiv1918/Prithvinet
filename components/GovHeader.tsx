@@ -85,7 +85,7 @@ export default function GovHeader() {
           <div className="site-header-title">
             <h1>PRITHVINET</h1>
             <p>Environment Monitoring &amp; Compliance Platform</p>
-            <p style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '0.1rem' }}>Maharashtra State Pollution Control Board</p>
+            <p style={{ fontSize: '0.6rem', color: '#8a92a8', marginTop: '0.1rem' }}>Maharashtra State Pollution Control Board</p>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default function GovHeader() {
           )}
           <div style={{ textAlign: 'right', fontFamily: 'Arial, sans-serif' }}>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{time}</div>
-            <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '0.1rem' }}>IST</div>
+            <div style={{ fontSize: '0.6rem', color: '#8a92a8', marginTop: '0.1rem' }}>IST</div>
           </div>
           <div style={{ background: 'var(--off-white)', border: '1px solid var(--border)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer', flexShrink: 0 }} title={user?.name}>
             👤
@@ -117,7 +117,7 @@ export default function GovHeader() {
         ))}
         <div className="top-nav-live">
           <span className="live-dot" />
-          <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontFamily: 'Arial, sans-serif' }}>Real-time data · Updated every 5s</span>
+          <span style={{ fontSize: '0.65rem', color: '#8a92a8', fontFamily: 'Arial, sans-serif' }}>Real-time data · Updated every 5s</span>
         </div>
       </nav>
     </>
