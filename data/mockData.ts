@@ -199,6 +199,7 @@ export const MONTHLY_REPORTS: MonthlyReport[] = [
   { id:'MR009', month:'September',year:2024, so2Avg:131, no2Avg:79, pm25Avg:89,  status:'Non-Compliant', submittedOn:'2024-10-02' },
   { id:'MR010', month:'October',  year:2024, so2Avg:138, no2Avg:85, pm25Avg:97,  status:'Non-Compliant', submittedOn:'2024-11-01' },
 ];
+
 export interface ChatMessage {
   id: number;
   from: string; fromRole: string;
