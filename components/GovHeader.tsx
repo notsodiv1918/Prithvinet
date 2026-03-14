@@ -54,6 +54,7 @@ export default function GovHeader() {
     { href: '/alert-rules',        label: 'Alert Rules',  icon: '⚐' },
     { href: '/compliance-calendar',label: 'Calendar',     icon: '▦' },
     { href: '/complaints',         label: 'Complaints',   icon: '✆' },
+    { href: '/telegram-complaints',  label: 'Telegram',     icon: '💬' },
   ];
 
   const tickerFull = [...NEWS_ITEMS, ...NEWS_ITEMS].join('   ◆   ');

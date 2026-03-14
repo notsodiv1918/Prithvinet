@@ -95,6 +95,23 @@ export default function FileComplaintPage() {
           <a href="/public" style={{ fontSize:'0.72rem', color:'#1a5280', fontFamily:'Arial', textDecoration:'none' }}>← Back to Air Quality Map</a>
         </div>
 
+        {/* Telegram option */}
+        <div style={{ background:'#e8f4fb', border:'1px solid #b8d8f0', borderRadius:'10px', padding:'1rem 1.25rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', gap:'1rem' }}>
+          <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#229ED9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+            </svg>
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:'0.82rem', fontWeight:'700', color:'#1a2744', fontFamily:'Arial' }}>File via Telegram Bot</div>
+            <div style={{ fontSize:'0.7rem', color:'#4a6280', marginTop:'0.1rem', fontFamily:'Arial' }}>Send your complaint directly on Telegram — instant, easy, no form needed</div>
+          </div>
+          <a href="https://t.me/Pritvinet_Bot" target="_blank" rel="noopener noreferrer"
+            style={{ background:'#229ED9', color:'white', border:'none', borderRadius:'6px', padding:'0.45rem 1rem', fontSize:'0.75rem', fontFamily:'Arial', fontWeight:'700', textDecoration:'none', flexShrink:0 }}>
+            Open Bot
+          </a>
+        </div>
+
         {submitted ? (
           /* ── Success screen ── */
           <div style={{ background:'white', borderRadius:'16px', padding:'2.5rem 2rem', textAlign:'center', boxShadow:'0 4px 20px rgba(26,39,68,0.1)' }}>
