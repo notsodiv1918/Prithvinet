@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import CitizenPageHeader from '@/components/CitizenPageHeader';
 import CitizenAIWidget from '@/components/CitizenAIWidget';
 import { addComplaint, ComplaintCategory } from '@/lib/complaintStore';
+import { generateComplaintPDF } from '@/lib/pdfUtils';
 
 const CATEGORIES: ComplaintCategory[] = ['Air Pollution','Water Pollution','Noise Pollution','Illegal Dumping','Other'];
 const DISTRICTS = ['Mumbai','Pune','Nagpur','Thane','Nashik','Aurangabad','Solapur','Kolhapur','Amravati','Navi Mumbai','Ratnagiri','Chandrapur','Latur','Akola','Yavatmal','Jalgaon','Gondia','Satara','Osmanabad'];
@@ -45,23 +46,33 @@ export default function FileComplaintPage() {
     reader.readAsDataURL(file);
   };
 
-  const submit = (ev: React.FormEvent) => {
+  const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      const complaint = addComplaint({
-        category:       form.category,
-        location:       form.location,
-        district:       form.district,
-        description:    form.description,
-        submittedBy:    form.anonymous ? 'Anonymous' : form.name.trim(),
-        submitterEmail: form.anonymous ? undefined : form.email.trim() || undefined,
-        photoBase64:    form.photoBase64 || undefined,
-      });
-      setLoading(false);
-      setSubmitted({ refNo: complaint.refNo, email: form.email.trim() });
-    }, 800);
+    const complaint = addComplaint({
+      category:       form.category,
+      location:       form.location,
+      district:       form.district,
+      description:    form.description,
+      submittedBy:    form.anonymous ? 'Anonymous' : form.name.trim(),
+      submitterEmail: form.anonymous ? undefined : form.email.trim() || undefined,
+      photoBase64:    form.photoBase64 || undefined,
+    });
+    // Auto-generate and open complaint PDF in new tab
+    await generateComplaintPDF({
+      refNo:          complaint.refNo,
+      category:       form.category,
+      district:       form.district,
+      location:       form.location,
+      description:    form.description,
+      submittedBy:    form.anonymous ? 'Anonymous' : form.name.trim(),
+      submitterEmail: form.anonymous ? undefined : form.email.trim() || undefined,
+      photoBase64:    form.photoBase64 || undefined,
+      datetime:       form.datetime,
+    });
+    setLoading(false);
+    setSubmitted({ refNo: complaint.refNo, email: form.email.trim() });
   };
 
   const inp: React.CSSProperties = { width:'100%', border:'1.5px solid #dde2ec', borderRadius:'6px', padding:'0.5rem 0.75rem', fontSize:'0.875rem', fontFamily:'Arial', background:'#f8f9fa', outline:'none', boxSizing:'border-box', color:'#1a2744' };

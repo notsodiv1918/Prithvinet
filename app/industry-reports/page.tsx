@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/useAuth';
 import { useRouter } from 'next/navigation';
 import { REPORTS } from '@/data/mockData';
 import toast, { Toaster } from 'react-hot-toast';
+import { generateReportPDF } from '@/lib/pdfUtils';
 
 export default function IndustryReports() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function IndustryReports() {
                     <td style={{ color:'var(--text-muted)', fontSize:'0.8rem' }}>{r.date}</td>
                     <td style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>{r.parameters}</td>
                     <td><span className={r.status==='Compliant'?'badge-compliant':r.status==='Non-Compliant'?'badge-noncompliant':'badge-pending'}>{r.status}</span></td>
-                    <td><button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.22rem 0.6rem' }} onClick={() => toast(`Report ${r.id} downloaded`, { icon:'📄' })}>Download</button></td>
+                    <td><button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.22rem 0.6rem' }} onClick={async () => { toast.loading('Generating PDF...'); await generateReportPDF(r, user.name); toast.dismiss(); }}>Download PDF</button></td>
                   </tr>
                 ))}
               </tbody>

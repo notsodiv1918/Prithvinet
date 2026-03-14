@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { REPORTS, INDUSTRIES } from '@/data/mockData';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import toast, { Toaster } from 'react-hot-toast';
+import { generateReportPDF } from '@/lib/pdfUtils';
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -107,7 +108,7 @@ export default function ReportsPage() {
                     <td style={{ color:'var(--text-muted)', fontSize:'0.75rem' }}>{r.parameters}</td>
                     <td style={{ fontSize:'0.78rem' }}>{r.submittedBy}</td>
                     <td><span className={r.status==='Compliant'?'badge-compliant':r.status==='Non-Compliant'?'badge-noncompliant':'badge-pending'}>{r.status}</span></td>
-                    <td><button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.22rem 0.6rem' }} onClick={() => toast(`Report ${r.id} downloaded`, { icon:'📄' })}>Download</button></td>
+                    <td><button className="btn-outline" style={{ fontSize:'0.7rem', padding:'0.22rem 0.6rem' }} onClick={async () => { toast.loading('Generating PDF...'); await generateReportPDF(r, user.name); toast.dismiss(); }}>Download PDF</button></td>
                   </tr>
                 ))}
               </tbody>
