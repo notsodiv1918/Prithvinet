@@ -34,16 +34,21 @@ export interface User {
 export const PRESCRIBED_LIMITS = { so2: 80, no2: 60, pm25: 60, noiseDay: 55, noiseNight: 45, aqi: 100 };
 
 export const STATIONS: Station[] = [
-  { id:'STN001', name:'Andheri East CAAQMS', district:'Mumbai', lat:19.1136, lng:72.8697, aqi:218, so2:92, no2:74, pm25:78, noise:68, status:'breach', type:'urban', lastUpdated:'2024-07-15 14:32' },
-  { id:'STN002', name:'Bandra Kurla Complex', district:'Mumbai', lat:19.0596, lng:72.8656, aqi:145, so2:61, no2:55, pm25:52, noise:62, status:'warning', type:'urban', lastUpdated:'2024-07-15 14:30' },
-  { id:'STN003', name:'Hadapsar Industrial Zone', district:'Pune', lat:18.5018, lng:73.9258, aqi:241, so2:138, no2:82, pm25:91, noise:71, status:'breach', type:'industrial', lastUpdated:'2024-07-15 14:28' },
-  { id:'STN004', name:'Nagpur Butibori MIDC', district:'Nagpur', lat:21.0114, lng:79.1082, aqi:267, so2:156, no2:94, pm25:104, noise:74, status:'breach', type:'industrial', lastUpdated:'2024-07-15 14:25' },
-  { id:'STN005', name:'Nashik Road Station', district:'Nashik', lat:19.9975, lng:73.7898, aqi:128, so2:58, no2:48, pm25:44, noise:54, status:'warning', type:'urban', lastUpdated:'2024-07-15 14:22' },
-  { id:'STN006', name:'Aurangabad CIDCO', district:'Aurangabad', lat:19.8762, lng:75.3433, aqi:87, so2:34, no2:28, pm25:31, noise:48, status:'safe', type:'urban', lastUpdated:'2024-07-15 14:20' },
-  { id:'STN007', name:'Thane Creek Zone', district:'Thane', lat:19.2183, lng:72.9781, aqi:162, so2:71, no2:58, pm25:61, noise:64, status:'warning', type:'industrial', lastUpdated:'2024-07-15 14:18' },
-  { id:'STN008', name:'Kolhapur Shiroli', district:'Kolhapur', lat:16.7050, lng:74.2433, aqi:72, so2:28, no2:22, pm25:26, noise:44, status:'safe', type:'rural', lastUpdated:'2024-07-15 14:15' },
-  { id:'STN009', name:'Solapur Industrial', district:'Solapur', lat:17.6805, lng:75.9064, aqi:94, so2:42, no2:36, pm25:38, noise:51, status:'safe', type:'industrial', lastUpdated:'2024-07-15 14:12' },
-  { id:'STN010', name:'Navi Mumbai Turbhe', district:'Navi Mumbai', lat:19.0771, lng:73.0183, aqi:78, so2:31, no2:27, pm25:29, noise:46, status:'safe', type:'urban', lastUpdated:'2024-07-15 14:10' },
+  { id:'STN001', name:'Andheri East CAAQMS',        district:'Mumbai',      lat:19.1136, lng:72.8697, aqi:218, so2:92,  no2:74, pm25:78,  noise:68, status:'breach',  type:'urban',       lastUpdated:'2024-07-15 14:32' },
+  { id:'STN002', name:'Bandra Kurla Complex',        district:'Mumbai',      lat:19.0596, lng:72.8656, aqi:145, so2:61,  no2:55, pm25:52,  noise:62, status:'warning', type:'urban',       lastUpdated:'2024-07-15 14:30' },
+  { id:'STN003', name:'Hadapsar Industrial Zone',    district:'Pune',        lat:18.5018, lng:73.9258, aqi:241, so2:138, no2:82, pm25:91,  noise:71, status:'breach',  type:'industrial',  lastUpdated:'2024-07-15 14:28' },
+  { id:'STN004', name:'Nagpur Butibori MIDC',        district:'Nagpur',      lat:21.0114, lng:79.1082, aqi:267, so2:156, no2:94, pm25:104, noise:74, status:'breach',  type:'industrial',  lastUpdated:'2024-07-15 14:25' },
+  { id:'STN005', name:'Nashik Road Station',         district:'Nashik',      lat:19.9975, lng:73.7898, aqi:128, so2:58,  no2:48, pm25:44,  noise:54, status:'warning', type:'urban',       lastUpdated:'2024-07-15 14:22' },
+  { id:'STN006', name:'Aurangabad CIDCO',            district:'Aurangabad',  lat:19.8762, lng:75.3433, aqi:87,  so2:34,  no2:28, pm25:31,  noise:48, status:'safe',    type:'urban',       lastUpdated:'2024-07-15 14:20' },
+  { id:'STN007', name:'Thane Creek Zone',            district:'Thane',       lat:19.2183, lng:72.9781, aqi:162, so2:71,  no2:58, pm25:61,  noise:64, status:'warning', type:'industrial',  lastUpdated:'2024-07-15 14:18' },
+  { id:'STN008', name:'Kolhapur Shiroli',            district:'Kolhapur',    lat:16.7050, lng:74.2433, aqi:72,  so2:28,  no2:22, pm25:26,  noise:44, status:'safe',    type:'rural',       lastUpdated:'2024-07-15 14:15' },
+  { id:'STN009', name:'Solapur Industrial',          district:'Solapur',     lat:17.6805, lng:75.9064, aqi:94,  so2:42,  no2:36, pm25:38,  noise:51, status:'safe',    type:'industrial',  lastUpdated:'2024-07-15 14:12' },
+  { id:'STN010', name:'Navi Mumbai Turbhe',          district:'Navi Mumbai', lat:19.0771, lng:73.0183, aqi:78,  so2:31,  no2:27, pm25:29,  noise:46, status:'safe',    type:'urban',       lastUpdated:'2024-07-15 14:10' },
+  { id:'STN011', name:'Chandrapur Power Station',   district:'Chandrapur',  lat:19.9615, lng:79.2961, aqi:298, so2:178, no2:108,pm25:118, noise:78, status:'breach',  type:'industrial',  lastUpdated:'2024-07-15 14:08' },
+  { id:'STN012', name:'Amravati City Centre',       district:'Amravati',    lat:20.9320, lng:77.7523, aqi:96,  so2:44,  no2:38, pm25:41,  noise:52, status:'safe',    type:'urban',       lastUpdated:'2024-07-15 14:05' },
+  { id:'STN013', name:'Latur Bus Stand Zone',       district:'Latur',       lat:18.4088, lng:76.5604, aqi:82,  so2:38,  no2:31, pm25:34,  noise:49, status:'safe',    type:'urban',       lastUpdated:'2024-07-15 14:02' },
+  { id:'STN014', name:'Jalgaon MIDC Phase-2',       district:'Jalgaon',     lat:21.0077, lng:75.5626, aqi:148, so2:68,  no2:52, pm25:58,  noise:61, status:'warning', type:'industrial',  lastUpdated:'2024-07-15 14:00' },
+  { id:'STN015', name:'Ratnagiri Coastal Zone',     district:'Ratnagiri',   lat:16.9944, lng:73.3001, aqi:61,  so2:22,  no2:18, pm25:21,  noise:41, status:'safe',    type:'rural',       lastUpdated:'2024-07-15 13:58' },
 ];
 
 export const INDUSTRIES: Industry[] = [
@@ -53,13 +58,13 @@ export const INDUSTRIES: Industry[] = [
     assignedRO:'Rajesh Kumar', currentSo2:142, currentNo2:88, currentPm25:98,
     complianceRate:28, lastReport:'2024-07-15',
     history:[
-      {date:'Jul 9',so2:148,no2:91,pm25:102,aqi:271,noise:76},
-      {date:'Jul 10',so2:135,no2:84,pm25:96,aqi:258,noise:73},
+      {date:'Jul 9', so2:148,no2:91,pm25:102,aqi:271,noise:76},
+      {date:'Jul 10',so2:135,no2:84,pm25:96, aqi:258,noise:73},
       {date:'Jul 11',so2:152,no2:96,pm25:108,aqi:284,noise:78},
-      {date:'Jul 12',so2:61,no2:52,pm25:54,aqi:98,noise:58},
-      {date:'Jul 13',so2:144,no2:88,pm25:99,aqi:268,noise:74},
-      {date:'Jul 14',so2:139,no2:85,pm25:94,aqi:261,noise:72},
-      {date:'Jul 15',so2:142,no2:88,pm25:98,aqi:267,noise:74},
+      {date:'Jul 12',so2:61, no2:52,pm25:54, aqi:98, noise:58},
+      {date:'Jul 13',so2:144,no2:88,pm25:99, aqi:268,noise:74},
+      {date:'Jul 14',so2:139,no2:85,pm25:94, aqi:261,noise:72},
+      {date:'Jul 15',so2:142,no2:88,pm25:98, aqi:267,noise:74},
     ],
   },
   {
@@ -68,7 +73,7 @@ export const INDUSTRIES: Industry[] = [
     assignedRO:'Anita Sharma', currentSo2:64, currentNo2:68, currentPm25:58,
     complianceRate:71, lastReport:'2024-07-15',
     history:[
-      {date:'Jul 9',so2:58,no2:72,pm25:56,aqi:138,noise:62},
+      {date:'Jul 9', so2:58,no2:72,pm25:56,aqi:138,noise:62},
       {date:'Jul 10',so2:61,no2:68,pm25:54,aqi:132,noise:60},
       {date:'Jul 11',so2:55,no2:74,pm25:58,aqi:144,noise:63},
       {date:'Jul 12',so2:52,no2:65,pm25:51,aqi:128,noise:59},
@@ -83,7 +88,7 @@ export const INDUSTRIES: Industry[] = [
     assignedRO:'Anita Sharma', currentSo2:38, currentNo2:31, currentPm25:27,
     complianceRate:96, lastReport:'2024-07-15',
     history:[
-      {date:'Jul 9',so2:41,no2:34,pm25:29,aqi:82,noise:47},
+      {date:'Jul 9', so2:41,no2:34,pm25:29,aqi:82,noise:47},
       {date:'Jul 10',so2:38,no2:31,pm25:27,aqi:78,noise:45},
       {date:'Jul 11',so2:36,no2:29,pm25:25,aqi:74,noise:44},
       {date:'Jul 12',so2:40,no2:33,pm25:28,aqi:80,noise:46},
@@ -92,26 +97,72 @@ export const INDUSTRIES: Industry[] = [
       {date:'Jul 15',so2:38,no2:31,pm25:27,aqi:78,noise:45},
     ],
   },
+  {
+    id:'IND004', name:'Chandrapur Thermal Power', type:'Power Generation', district:'Chandrapur',
+    lat:19.9515, lng:79.2861, contactPerson:'Dinesh Rao', phone:'+91-7172-234567',
+    assignedRO:'Rajesh Kumar', currentSo2:178, currentNo2:108, currentPm25:118,
+    complianceRate:12, lastReport:'2024-07-14',
+    history:[
+      {date:'Jul 9', so2:182,no2:112,pm25:122,aqi:304,noise:79},
+      {date:'Jul 10',so2:175,no2:106,pm25:116,aqi:291,noise:77},
+      {date:'Jul 11',so2:184,no2:114,pm25:124,aqi:308,noise:80},
+      {date:'Jul 12',so2:170,no2:102,pm25:112,aqi:282,noise:76},
+      {date:'Jul 13',so2:179,no2:109,pm25:119,aqi:298,noise:78},
+      {date:'Jul 14',so2:176,no2:107,pm25:117,aqi:294,noise:77},
+      {date:'Jul 15',so2:178,no2:108,pm25:118,aqi:296,noise:78},
+    ],
+  },
+  {
+    id:'IND005', name:'Nashik Pharma Industries', type:'Pharmaceutical', district:'Nashik',
+    lat:19.9875, lng:73.7798, contactPerson:'Kavita Wagh', phone:'+91-253-2345678',
+    assignedRO:'Anita Sharma', currentSo2:52, currentNo2:44, currentPm25:41,
+    complianceRate:84, lastReport:'2024-07-15',
+    history:[
+      {date:'Jul 9', so2:54,no2:46,pm25:43,aqi:112,noise:53},
+      {date:'Jul 10',so2:51,no2:43,pm25:40,aqi:108,noise:51},
+      {date:'Jul 11',so2:56,no2:47,pm25:44,aqi:116,noise:54},
+      {date:'Jul 12',so2:49,no2:41,pm25:38,aqi:104,noise:50},
+      {date:'Jul 13',so2:53,no2:45,pm25:42,aqi:111,noise:52},
+      {date:'Jul 14',so2:50,no2:42,pm25:39,aqi:106,noise:51},
+      {date:'Jul 15',so2:52,no2:44,pm25:41,aqi:109,noise:52},
+    ],
+  },
 ];
 
 export const REPORTS: Report[] = [
-  {id:'RPT001',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-  {id:'RPT002',industry:'Maharashtra Textiles Ltd',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Priya Deshmukh'},
-  {id:'RPT003',industry:'Pune Chemicals Co.',type:'Daily',date:'2024-07-15',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
-  {id:'RPT004',industry:'Bharat Steel Works',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-  {id:'RPT005',industry:'Maharashtra Textiles Ltd',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Compliant',submittedBy:'Priya Deshmukh'},
-  {id:'RPT006',industry:'Pune Chemicals Co.',type:'Monthly',date:'2024-06-30',parameters:'All Parameters',status:'Compliant',submittedBy:'Vikram Joshi'},
-  {id:'RPT007',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
-  {id:'RPT008',industry:'Pune Chemicals Co.',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂, PM2.5, Noise',status:'Compliant',submittedBy:'Vikram Joshi'},
-  {id:'RPT009',industry:'Maharashtra Textiles Ltd',type:'Daily',date:'2024-07-14',parameters:'SO₂, NO₂',status:'Pending',submittedBy:'Priya Deshmukh'},
-  {id:'RPT010',industry:'Bharat Steel Works',type:'Daily',date:'2024-07-13',parameters:'SO₂, NO₂, PM2.5',status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  // Bharat Steel Works — multiple months, mostly non-compliant
+  {id:'RPT001',industry:'Bharat Steel Works',        type:'Daily',  date:'2024-07-15',parameters:'SO2, NO2, PM2.5, Noise',  status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT002',industry:'Maharashtra Textiles Ltd',  type:'Daily',  date:'2024-07-15',parameters:'SO2, NO2, PM2.5',         status:'Non-Compliant',submittedBy:'Priya Deshmukh'},
+  {id:'RPT003',industry:'Pune Chemicals Co.',        type:'Daily',  date:'2024-07-15',parameters:'SO2, NO2, PM2.5, Noise',  status:'Compliant',    submittedBy:'Vikram Joshi'},
+  {id:'RPT004',industry:'Bharat Steel Works',        type:'Monthly',date:'2024-06-30',parameters:'All Parameters',          status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT005',industry:'Maharashtra Textiles Ltd',  type:'Monthly',date:'2024-06-30',parameters:'All Parameters',          status:'Compliant',    submittedBy:'Priya Deshmukh'},
+  {id:'RPT006',industry:'Pune Chemicals Co.',        type:'Monthly',date:'2024-06-30',parameters:'All Parameters',          status:'Compliant',    submittedBy:'Vikram Joshi'},
+  {id:'RPT007',industry:'Bharat Steel Works',        type:'Daily',  date:'2024-07-14',parameters:'SO2, NO2, PM2.5',         status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT008',industry:'Pune Chemicals Co.',        type:'Daily',  date:'2024-07-14',parameters:'SO2, NO2, PM2.5, Noise',  status:'Compliant',    submittedBy:'Vikram Joshi'},
+  {id:'RPT009',industry:'Maharashtra Textiles Ltd',  type:'Daily',  date:'2024-07-14',parameters:'SO2, NO2',                status:'Pending',      submittedBy:'Priya Deshmukh'},
+  {id:'RPT010',industry:'Bharat Steel Works',        type:'Daily',  date:'2024-07-13',parameters:'SO2, NO2, PM2.5',         status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT011',industry:'Chandrapur Thermal Power',  type:'Daily',  date:'2024-07-15',parameters:'SO2, NO2, PM2.5, Noise',  status:'Non-Compliant',submittedBy:'Dinesh Rao'},
+  {id:'RPT012',industry:'Chandrapur Thermal Power',  type:'Daily',  date:'2024-07-14',parameters:'SO2, NO2, PM2.5',         status:'Non-Compliant',submittedBy:'Dinesh Rao'},
+  {id:'RPT013',industry:'Nashik Pharma Industries',  type:'Daily',  date:'2024-07-15',parameters:'SO2, NO2, PM2.5',         status:'Compliant',    submittedBy:'Kavita Wagh'},
+  {id:'RPT014',industry:'Nashik Pharma Industries',  type:'Daily',  date:'2024-07-14',parameters:'SO2, NO2, PM2.5, Noise',  status:'Compliant',    submittedBy:'Kavita Wagh'},
+  {id:'RPT015',industry:'Bharat Steel Works',        type:'Monthly',date:'2024-05-31',parameters:'All Parameters',          status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT016',industry:'Maharashtra Textiles Ltd',  type:'Monthly',date:'2024-05-31',parameters:'All Parameters',          status:'Non-Compliant',submittedBy:'Priya Deshmukh'},
+  {id:'RPT017',industry:'Pune Chemicals Co.',        type:'Monthly',date:'2024-05-31',parameters:'All Parameters',          status:'Compliant',    submittedBy:'Vikram Joshi'},
+  {id:'RPT018',industry:'Chandrapur Thermal Power',  type:'Monthly',date:'2024-06-30',parameters:'All Parameters',          status:'Non-Compliant',submittedBy:'Dinesh Rao'},
+  {id:'RPT019',industry:'Nashik Pharma Industries',  type:'Monthly',date:'2024-06-30',parameters:'All Parameters',          status:'Compliant',    submittedBy:'Kavita Wagh'},
+  {id:'RPT020',industry:'Bharat Steel Works',        type:'Daily',  date:'2024-07-12',parameters:'SO2, NO2, Noise',         status:'Non-Compliant',submittedBy:'Suresh Patil'},
+  {id:'RPT021',industry:'Pune Chemicals Co.',        type:'Daily',  date:'2024-07-13',parameters:'SO2, NO2, PM2.5',         status:'Compliant',    submittedBy:'Vikram Joshi'},
+  {id:'RPT022',industry:'Chandrapur Thermal Power',  type:'Daily',  date:'2024-07-13',parameters:'SO2, NO2, PM2.5',         status:'Non-Compliant',submittedBy:'Dinesh Rao'},
+  {id:'RPT023',industry:'Maharashtra Textiles Ltd',  type:'Daily',  date:'2024-07-13',parameters:'SO2, NO2, PM2.5',         status:'Compliant',    submittedBy:'Priya Deshmukh'},
+  {id:'RPT024',industry:'Nashik Pharma Industries',  type:'Daily',  date:'2024-07-13',parameters:'All Parameters',          status:'Compliant',    submittedBy:'Kavita Wagh'},
+  {id:'RPT025',industry:'Chandrapur Thermal Power',  type:'Monthly',date:'2024-05-31',parameters:'All Parameters',          status:'Non-Compliant',submittedBy:'Dinesh Rao'},
 ];
 
 export const USERS: User[] = [
-  {id:1,name:'Arjun Mehta',role:'Super Admin',email:'admin@prithvinet.gov.in',password:'admin123',redirect:'/dashboard'},
-  {id:2,name:'Rajesh Kumar',role:'Regional Officer',email:'ro@prithvinet.gov.in',password:'ro123',district:'Nagpur',redirect:'/dashboard'},
-  {id:3,name:'Suresh Patil',role:'Industry User',email:'industry@bharatsteel.in',password:'industry123',redirect:'/submit'},
-  {id:4,name:'Citizen',role:'Citizen',email:'citizen@gmail.com',password:'citizen123',redirect:'/public'},
+  {id:1, name:'Arjun Mehta',   role:'Super Admin',      email:'admin@prithvinet.gov.in', password:'admin123',    redirect:'/dashboard'},
+  {id:2, name:'Rajesh Kumar',  role:'Regional Officer', email:'ro@prithvinet.gov.in',    password:'ro123',       district:'Nagpur', redirect:'/dashboard'},
+  {id:3, name:'Suresh Patil',  role:'Industry User',    email:'industry@bharatsteel.in', password:'industry123', redirect:'/submit'},
+  {id:4, name:'Citizen',       role:'Citizen',          email:'citizen@gmail.com',       password:'citizen123',  redirect:'/public'},
 ];
 
 export const FORECAST_DATA = Array.from({length:72},(_,i)=>{
@@ -135,6 +186,7 @@ export interface MonthlyReport {
   so2Avg: number; no2Avg: number; pm25Avg: number;
   status: 'Compliant' | 'Non-Compliant'; submittedOn: string;
 }
+
 export const MONTHLY_REPORTS: MonthlyReport[] = [
   { id:'MR001', month:'January',  year:2024, so2Avg:138, no2Avg:84, pm25Avg:96,  status:'Non-Compliant', submittedOn:'2024-02-01' },
   { id:'MR002', month:'February', year:2024, so2Avg:142, no2Avg:88, pm25Avg:101, status:'Non-Compliant', submittedOn:'2024-03-01' },
@@ -142,4 +194,8 @@ export const MONTHLY_REPORTS: MonthlyReport[] = [
   { id:'MR004', month:'April',    year:2024, so2Avg:135, no2Avg:81, pm25Avg:93,  status:'Non-Compliant', submittedOn:'2024-05-01' },
   { id:'MR005', month:'May',      year:2024, so2Avg:144, no2Avg:89, pm25Avg:102, status:'Non-Compliant', submittedOn:'2024-06-03' },
   { id:'MR006', month:'June',     year:2024, so2Avg:71,  no2Avg:61, pm25Avg:58,  status:'Compliant',     submittedOn:'2024-07-01' },
+  { id:'MR007', month:'July',     year:2024, so2Avg:148, no2Avg:91, pm25Avg:105, status:'Non-Compliant', submittedOn:'2024-08-02' },
+  { id:'MR008', month:'August',   year:2024, so2Avg:62,  no2Avg:54, pm25Avg:51,  status:'Compliant',     submittedOn:'2024-09-01' },
+  { id:'MR009', month:'September',year:2024, so2Avg:131, no2Avg:79, pm25Avg:89,  status:'Non-Compliant', submittedOn:'2024-10-02' },
+  { id:'MR010', month:'October',  year:2024, so2Avg:138, no2Avg:85, pm25Avg:97,  status:'Non-Compliant', submittedOn:'2024-11-01' },
 ];

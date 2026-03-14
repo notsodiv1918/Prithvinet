@@ -90,7 +90,7 @@ export interface EscalationCase {
   level: EscalationLevel;
   status: EscalationStatus;
   openedAt: string;
-  deadline: string;            // RO must act by
+  deadline: string;
   acknowledgedAt?: string;
   actionNote?: string;
   escalatedToAdmin: boolean;
@@ -100,7 +100,7 @@ export const ESCALATION_CASES: EscalationCase[] = [
   {
     id: 'ESC001', industryId: 'IND001', industryName: 'Bharat Steel Works',
     district: 'Nagpur', assignedRO: 'Rajesh Kumar',
-    pollutant: 'SO₂', currentValue: 142, limit: 80, unit: 'ppm',
+    pollutant: 'SO2', currentValue: 142, limit: 80, unit: 'ppm',
     daysExceeded: 7, level: 'Show Cause', status: 'Open',
     openedAt: '8 Mar 2026', deadline: '15 Mar 2026',
     escalatedToAdmin: true,
@@ -108,7 +108,7 @@ export const ESCALATION_CASES: EscalationCase[] = [
   {
     id: 'ESC002', industryId: 'IND002', industryName: 'Maharashtra Textiles Ltd',
     district: 'Pune', assignedRO: 'Anita Sharma',
-    pollutant: 'NO₂', currentValue: 68, limit: 60, unit: 'ppm',
+    pollutant: 'NO2', currentValue: 68, limit: 60, unit: 'ppm',
     daysExceeded: 3, level: 'Notice', status: 'Acknowledged',
     openedAt: '10 Mar 2026', deadline: '17 Mar 2026',
     acknowledgedAt: '11 Mar 2026',
@@ -118,7 +118,7 @@ export const ESCALATION_CASES: EscalationCase[] = [
   {
     id: 'ESC003', industryId: 'IND001', industryName: 'Bharat Steel Works',
     district: 'Nagpur', assignedRO: 'Rajesh Kumar',
-    pollutant: 'PM2.5', currentValue: 104, limit: 60, unit: 'µg/m³',
+    pollutant: 'PM2.5', currentValue: 104, limit: 60, unit: 'ug/m3',
     daysExceeded: 5, level: 'Notice', status: 'In Progress',
     openedAt: '9 Mar 2026', deadline: '16 Mar 2026',
     acknowledgedAt: '10 Mar 2026',
@@ -149,14 +149,14 @@ export interface AlertRule {
 }
 
 export const ALERT_RULES: AlertRule[] = [
-  { id:'R001', name:'SO₂ Breach',        pollutant:'SO₂',  threshold:80,  unit:'ppm',    domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
-  { id:'R002', name:'AQI > 200',         pollutant:'AQI',  threshold:200, unit:'',       domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
-  { id:'R003', name:'AQI Elevated',      pollutant:'AQI',  threshold:100, unit:'',       domain:'air',   severity:'warning',  notifyRoles:['Regional Officer'],                active:true  },
-  { id:'R004', name:'PM2.5 Breach',      pollutant:'PM2.5',threshold:60,  unit:'µg/m³',  domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
-  { id:'R005', name:'Water Critical',    pollutant:'DO',   threshold:2,   unit:'mg/L',   domain:'water', severity:'critical', notifyRoles:['Super Admin'],                    active:true  },
-  { id:'R006', name:'Water Poor DO',     pollutant:'DO',   threshold:4,   unit:'mg/L',   domain:'water', severity:'warning',  notifyRoles:['Regional Officer'],                active:true  },
-  { id:'R007', name:'Industrial Noise',  pollutant:'Noise',threshold:75,  unit:'dB(A)',  domain:'noise', severity:'warning',  notifyRoles:['Regional Officer'],                active:true  },
-  { id:'R008', name:'Noise Breach',      pollutant:'Noise',threshold:80,  unit:'dB(A)',  domain:'noise', severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:false },
+  { id:'R001', name:'SO2 Breach',       pollutant:'SO2',  threshold:80,  unit:'ppm',   domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
+  { id:'R002', name:'AQI > 200',        pollutant:'AQI',  threshold:200, unit:'',      domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
+  { id:'R003', name:'AQI Elevated',     pollutant:'AQI',  threshold:100, unit:'',      domain:'air',   severity:'warning',  notifyRoles:['Regional Officer'],               active:true  },
+  { id:'R004', name:'PM2.5 Breach',     pollutant:'PM2.5',threshold:60,  unit:'ug/m3', domain:'air',   severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:true  },
+  { id:'R005', name:'Water Critical',   pollutant:'DO',   threshold:2,   unit:'mg/L',  domain:'water', severity:'critical', notifyRoles:['Super Admin'],                   active:true  },
+  { id:'R006', name:'Water Poor DO',    pollutant:'DO',   threshold:4,   unit:'mg/L',  domain:'water', severity:'warning',  notifyRoles:['Regional Officer'],               active:true  },
+  { id:'R007', name:'Industrial Noise', pollutant:'Noise',threshold:75,  unit:'dB(A)', domain:'noise', severity:'warning',  notifyRoles:['Regional Officer'],               active:true  },
+  { id:'R008', name:'Noise Breach',     pollutant:'Noise',threshold:80,  unit:'dB(A)', domain:'noise', severity:'critical', notifyRoles:['Super Admin','Regional Officer'], active:false },
 ];
 
 export interface AutoAlert {
@@ -176,12 +176,12 @@ export interface AutoAlert {
 }
 
 export const AUTO_ALERTS: AutoAlert[] = [
-  { id:'AL001', ruleId:'R001', ruleName:'SO₂ Breach',       stationName:'Nagpur Butibori MIDC', district:'Nagpur', triggeredValue:156, threshold:80,  unit:'ppm',    severity:'critical', firedAt:'14 Mar 2026 01:25 AM', acknowledged:false, domain:'air'   },
-  { id:'AL002', ruleId:'R002', ruleName:'AQI > 200',         stationName:'Hadapsar Industrial',  district:'Pune',   triggeredValue:241, threshold:200, unit:'',       severity:'critical', firedAt:'14 Mar 2026 01:32 AM', acknowledged:false, domain:'air'   },
-  { id:'AL003', ruleId:'R004', ruleName:'PM2.5 Breach',      stationName:'Andheri East CAAQMS', district:'Mumbai', triggeredValue:78,  threshold:60,  unit:'µg/m³',  severity:'critical', firedAt:'14 Mar 2026 01:30 AM', acknowledged:false, domain:'air'   },
-  { id:'AL004', ruleId:'R005', ruleName:'Water Critical DO', stationName:'Nag River — Nagpur',  district:'Nagpur', triggeredValue:1.9, threshold:2,   unit:'mg/L',   severity:'critical', firedAt:'14 Mar 2026 08:45 AM', acknowledged:true,  acknowledgedBy:'Super Admin', domain:'water' },
-  { id:'AL005', ruleId:'R003', ruleName:'AQI Elevated',      stationName:'Thane Creek Zone',    district:'Thane',  triggeredValue:162, threshold:100, unit:'',       severity:'warning',  firedAt:'14 Mar 2026 01:18 AM', acknowledged:true,  acknowledgedBy:'Rajesh Kumar', domain:'air'  },
-  { id:'AL006', ruleId:'R007', ruleName:'Industrial Noise',  stationName:'Dharavi Industrial',  district:'Mumbai', triggeredValue:81,  threshold:75,  unit:'dB(A)',  severity:'warning',  firedAt:'14 Mar 2026 01:30 AM', acknowledged:false, domain:'noise' },
+  { id:'AL001', ruleId:'R001', ruleName:'SO2 Breach',       stationName:'Nagpur Butibori MIDC', district:'Nagpur', triggeredValue:156, threshold:80,  unit:'ppm',   severity:'critical', firedAt:'14 Mar 2026 01:25 AM', acknowledged:false, domain:'air'   },
+  { id:'AL002', ruleId:'R002', ruleName:'AQI > 200',        stationName:'Hadapsar Industrial',  district:'Pune',   triggeredValue:241, threshold:200, unit:'',      severity:'critical', firedAt:'14 Mar 2026 01:32 AM', acknowledged:false, domain:'air'   },
+  { id:'AL003', ruleId:'R004', ruleName:'PM2.5 Breach',     stationName:'Andheri East CAAQMS', district:'Mumbai', triggeredValue:78,  threshold:60,  unit:'ug/m3', severity:'critical', firedAt:'14 Mar 2026 01:30 AM', acknowledged:false, domain:'air'   },
+  { id:'AL004', ruleId:'R005', ruleName:'Water Critical DO',stationName:'Nag River Nagpur',    district:'Nagpur', triggeredValue:1.9, threshold:2,   unit:'mg/L',  severity:'critical', firedAt:'14 Mar 2026 08:45 AM', acknowledged:true,  acknowledgedBy:'Super Admin',  domain:'water' },
+  { id:'AL005', ruleId:'R003', ruleName:'AQI Elevated',     stationName:'Thane Creek Zone',    district:'Thane',  triggeredValue:162, threshold:100, unit:'',      severity:'warning',  firedAt:'14 Mar 2026 01:18 AM', acknowledged:true,  acknowledgedBy:'Rajesh Kumar', domain:'air'   },
+  { id:'AL006', ruleId:'R007', ruleName:'Industrial Noise', stationName:'Dharavi Industrial',  district:'Mumbai', triggeredValue:81,  threshold:75,  unit:'dB(A)', severity:'warning',  firedAt:'14 Mar 2026 01:30 AM', acknowledged:false, domain:'noise' },
 ];
 
 // ── 4. COMPLIANCE CALENDAR ────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export type CalendarEventType = 'report_due' | 'inspection' | 'festival' | 'dead
 export interface CalendarEvent {
   id: string;
   title: string;
-  date: string;           // YYYY-MM-DD
+  date: string;
   type: CalendarEventType;
   industry?: string;
   district?: string;
@@ -201,16 +201,16 @@ export interface CalendarEvent {
 }
 
 export const CALENDAR_EVENTS: CalendarEvent[] = [
-  { id:'CE001', title:'Monthly Reports Due',          date:'2026-03-31', type:'report_due',  priority:'high',   description:'All registered industries must submit March 2026 monthly emissions report.', completed:false },
-  { id:'CE002', title:'Bharat Steel — SO₂ Hearing',   date:'2026-03-20', type:'hearing',     industry:'Bharat Steel Works', district:'Nagpur', assignedRO:'Rajesh Kumar', priority:'high', description:'Show-cause hearing for sustained SO₂ breach over 7 days.', completed:false },
-  { id:'CE003', title:'Pune Chemicals Inspection',    date:'2026-03-18', type:'inspection',  industry:'Pune Chemicals Co.', district:'Pune', assignedRO:'Anita Sharma', priority:'medium', description:'Scheduled quarterly inspection of pollution control systems.', completed:false },
-  { id:'CE004', title:'Gudi Padwa — Festival Period', date:'2026-03-30', type:'festival',    priority:'high',   description:'Festival period: temporary emission limits apply. Top-risk units must reduce output by 20%.', completed:false },
-  { id:'CE005', title:'Maharashtra Textiles Reminder',date:'2026-03-15', type:'deadline',    industry:'Maharashtra Textiles Ltd', district:'Pune', assignedRO:'Anita Sharma', priority:'medium', description:'ESC004: Missing monthly report deadline. Final reminder before escalation.', completed:false },
-  { id:'CE006', title:'Daily Reports Due',            date:'2026-03-14', type:'report_due',  priority:'low',    description:'Daily emissions data submission for all CAAQMS-monitored industries.', completed:false },
-  { id:'CE007', title:'Quarterly MPCB Review',        date:'2026-04-05', type:'hearing',     priority:'high',   description:'Q1 2026 performance review with Maharashtra SPCB board. All ROs must present district summaries.', completed:false },
-  { id:'CE008', title:'Nagpur Butibori Inspection',   date:'2026-03-16', type:'inspection',  district:'Nagpur', assignedRO:'Rajesh Kumar', priority:'high', description:'Emergency inspection ordered due to ESC001 breach.', completed:false },
-  { id:'CE009', title:'April Monthly Reports Due',    date:'2026-04-30', type:'report_due',  priority:'medium', description:'April 2026 monthly reports deadline.', completed:false },
-  { id:'CE010', title:'Holi — Festival Advisory',     date:'2026-03-14', type:'festival',    priority:'medium', description:'Holi festival: monitor particulate levels. Issue public advisory if AQI crosses 200.', completed:false },
+  { id:'CE001', title:'Monthly Reports Due',           date:'2026-03-31', type:'report_due',  priority:'high',   description:'All registered industries must submit March 2026 monthly emissions report.', completed:false },
+  { id:'CE002', title:'Bharat Steel SO2 Hearing',      date:'2026-03-20', type:'hearing',     industry:'Bharat Steel Works', district:'Nagpur', assignedRO:'Rajesh Kumar', priority:'high', description:'Show-cause hearing for sustained SO2 breach over 7 days.', completed:false },
+  { id:'CE003', title:'Pune Chemicals Inspection',     date:'2026-03-18', type:'inspection',  industry:'Pune Chemicals Co.', district:'Pune', assignedRO:'Anita Sharma', priority:'medium', description:'Scheduled quarterly inspection of pollution control systems.', completed:false },
+  { id:'CE004', title:'Gudi Padwa Festival Period',    date:'2026-03-30', type:'festival',    priority:'high',   description:'Festival period: temporary emission limits apply. Top-risk units must reduce output by 20%.', completed:false },
+  { id:'CE005', title:'Maharashtra Textiles Reminder', date:'2026-03-15', type:'deadline',    industry:'Maharashtra Textiles Ltd', district:'Pune', assignedRO:'Anita Sharma', priority:'medium', description:'ESC004: Missing monthly report deadline. Final reminder before escalation.', completed:false },
+  { id:'CE006', title:'Daily Reports Due',             date:'2026-03-14', type:'report_due',  priority:'low',    description:'Daily emissions data submission for all CAAQMS-monitored industries.', completed:false },
+  { id:'CE007', title:'Quarterly MPCB Review',         date:'2026-04-05', type:'hearing',     priority:'high',   description:'Q1 2026 performance review with Maharashtra SPCB board. All ROs must present district summaries.', completed:false },
+  { id:'CE008', title:'Nagpur Butibori Inspection',    date:'2026-03-16', type:'inspection',  district:'Nagpur', assignedRO:'Rajesh Kumar', priority:'high', description:'Emergency inspection ordered due to ESC001 breach.', completed:false },
+  { id:'CE009', title:'April Monthly Reports Due',     date:'2026-04-30', type:'report_due',  priority:'medium', description:'April 2026 monthly reports deadline.', completed:false },
+  { id:'CE010', title:'Holi Festival Advisory',        date:'2026-03-14', type:'festival',    priority:'medium', description:'Holi festival: monitor particulate levels. Issue public advisory if AQI crosses 200.', completed:false },
 ];
 
 // ── 5. CITIZEN COMPLAINTS ─────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ export interface CitizenComplaint {
   description: string;
   location: string;
   district: string;
-  submittedBy: string;       // name (anonymous option)
+  submittedBy: string;
   submittedAt: string;
   status: ComplaintStatus;
   assignedRO?: string;
