@@ -199,3 +199,19 @@ export const MONTHLY_REPORTS: MonthlyReport[] = [
   { id:'MR009', month:'September',year:2024, so2Avg:131, no2Avg:79, pm25Avg:89,  status:'Non-Compliant', submittedOn:'2024-10-02' },
   { id:'MR010', month:'October',  year:2024, so2Avg:138, no2Avg:85, pm25Avg:97,  status:'Non-Compliant', submittedOn:'2024-11-01' },
 ];
+export interface ChatMessage {
+  id: number;
+  from: string; fromRole: string;
+  to: string; toRole: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+}
+
+export const CHAT_MESSAGES: ChatMessage[] = [
+  { id:1, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Rajesh, Bharat Steel has breached SO2 limits for 5 consecutive days. Please schedule an on-site inspection this week.', timestamp:'2024-07-15 09:15', read:true },
+  { id:2, from:'Rajesh Kumar', fromRole:'Regional Officer', to:'Arjun Mehta', toRole:'Super Admin', message:'Noted sir. I will visit the facility on 17th July. Their filter maintenance is overdue by 3 weeks.', timestamp:'2024-07-15 09:42', read:true },
+  { id:3, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Also check the Hadapsar station — PM2.5 readings are unusually high. Could be a new source.', timestamp:'2024-07-15 10:05', read:true },
+  { id:4, from:'Rajesh Kumar', fromRole:'Regional Officer', to:'Arjun Mehta', toRole:'Super Admin', message:'Maharashtra Textiles NO2 is also trending upward this week. Should I issue a formal notice?', timestamp:'2024-07-15 11:30', read:false },
+  { id:5, from:'Arjun Mehta', fromRole:'Super Admin', to:'Rajesh Kumar', toRole:'Regional Officer', message:'Yes, issue a notice if they breach the limit again today. Keep me posted.', timestamp:'2024-07-15 11:48', read:false },
+];

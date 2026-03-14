@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import ROSidebar from '@/components/ROSidebar';
 import TopBar from '@/components/TopBar';
-import { STATIONS, INDUSTRIES, PRESCRIBED_LIMITS, CHAT_MESSAGES } from '@/data/mockData';
+import { STATIONS, INDUSTRIES, PRESCRIBED_LIMITS } from '@/data/mockData';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 
