@@ -32,14 +32,13 @@ export default function LoginPage() {
     { label: 'Super Admin',      email: 'admin@prithvinet.gov.in', password: 'admin123',    color: '#1a4e8a', bg: '#eef4fb', role: 'Full system access'  },
     { label: 'Regional Officer', email: 'ro@prithvinet.gov.in',    password: 'ro123',       color: '#166534', bg: '#f0fdf4', role: 'Nagpur zone'         },
     { label: 'Industry User',    email: 'industry@bharatsteel.in', password: 'industry123', color: '#92400e', bg: '#fffbeb', role: 'Bharat Steel Works'  },
+    { label: 'Citizen',          email: 'citizen@gmail.com',       password: 'citizen123',  color: '#1e40af', bg: '#eff6ff', role: 'Public portal'       },
   ];
 
   const tickerText = [...NEWS, ...NEWS].join('     —     ');
 
   const publicPortals = [
-    { href: '/public',       label: 'Air Quality Portal',   sub: 'Live AQI across Maharashtra cities',         dot: '#16a34a' },
-    { href: '/public-water', label: 'Water Quality Portal', sub: 'River and reservoir water quality data',     dot: '#0284c7' },
-    { href: '/public-noise', label: 'Noise Monitoring',     sub: 'Zone-wise decibel levels, day and night',    dot: '#d97706' },
+    { href: '/public', label: 'Pollution Quality Dashboard', sub: 'Air, water and noise monitoring across Maharashtra', dot: '#16a34a' },
   ];
 
   return (
@@ -157,7 +156,7 @@ export default function LoginPage() {
               src="/india-map.png"
               alt="India map with Maharashtra highlighted"
               style={{
-                width: '520px',
+                width: '360px',
                 height: 'auto',
                 mixBlendMode: 'multiply',
                 position: 'relative',
@@ -188,7 +187,7 @@ export default function LoginPage() {
           {/* Demo buttons */}
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ fontSize: '0.57rem', color: '#b0a090', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: '700', marginBottom: '0.6rem' }}>Quick Demo Access</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
               {demoLogins.map(d => (
                 <button key={d.label}
                   onClick={() => { setEmail(d.email); setPassword(d.password); }}

@@ -7,18 +7,18 @@ interface Props {
 }
 
 const NEWS = [
-  '🔴 LIVE: Nagpur Butibori AQI at 267 — Very Unhealthy — Avoid outdoor activity',
-  '⚠ Nag River (Nagpur) water quality CRITICAL — DO: 1.9 mg/L — Avoid contact',
-  '🔊 Dharavi Industrial Area noise at 81 dB(A) — Exceeds limit by 6 dB',
-  '✅ Godavari River (Nashik) maintaining GOOD quality for 6th consecutive month',
-  '📋 MPCB Annual Environment Report 2025-26 published — Download at mpcb.gov.in',
-  '⚠ PM2.5 elevated across Pune region — Advisory for sensitive groups',
-  '📡 New CAAQMS station commissioned at Chandrapur — Real-time data now live',
+  'LIVE: Nagpur Butibori AQI at 267  -  Very Unhealthy  -  Avoid outdoor activity',
+  'Nag River (Nagpur) water quality CRITICAL  -  DO: 1.9 mg/L  -  Avoid contact',
+  'Dharavi Industrial Area noise at 81 dB(A)  -  Exceeds limit by 6 dB',
+  'Godavari River (Nashik) maintaining GOOD quality for 6th consecutive month',
+  'MPCB Annual Environment Report 2025-26 published  -  Download at mpcb.gov.in',
+  'PM2.5 elevated across Pune region  -  Advisory for sensitive groups',
+  'New CAAQMS station commissioned at Chandrapur  -  Real-time data now live',
 ];
 
 export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
   const [time, setTime] = useState('');
-  const tickerFull = [...NEWS, ...NEWS].join('   ◆   ');
+  const tickerFull = [...NEWS, ...NEWS].join('   |   ');
 
   useEffect(() => {
     const update = () => setTime(
@@ -30,7 +30,7 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
   }, []);
 
   const tabs = [
-    { key: 'air',   href: '/public',       label: '💨 Air Quality',   activeColor: '#FF8C33' },
+    { key: 'air',   href: '/public',       label: 'Air Quality',   activeColor: '#FF8C33' },
   ];
 
   return (
@@ -58,7 +58,7 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
           <img src="/logo.jpeg" alt="PrithviNet" style={{ height: '52px', width: 'auto' }} />
           <div style={{ borderLeft: '2px solid #dde2ec', paddingLeft: '1rem' }}>
             <div style={{ fontSize: '1rem', fontWeight: '800', color: '#1a2744', fontFamily: 'Georgia' }}>PRITHVINET</div>
-            <div style={{ fontSize: '0.7rem', color: '#6b7a96', fontFamily: 'Arial' }}>Citizen Environmental Portal · Maharashtra SPCB</div>
+            <div style={{ fontSize: '0.7rem', color: '#6b7a96', fontFamily: 'Arial' }}>Citizen Environmental Portal - Maharashtra SPCB</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -67,7 +67,7 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
             <div style={{ fontSize: '0.58rem', color: '#94a3b8' }}>{stationCount} stations active</div>
           </div>
           <a href="/" style={{ background: '#1a2744', color: 'white', fontSize: '0.7rem', fontFamily: 'Arial', fontWeight: '600', padding: '0.35rem 0.8rem', borderRadius: '3px', textDecoration: 'none', flexShrink: 0 }}>
-            ⊞ Staff Login
+            Staff Login
           </a>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
           </a>
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/file-complaint" style={{ fontSize: '0.68rem', color: '#c8d4e8', fontFamily: 'Arial', textDecoration: 'none', padding: '0 0.5rem', borderRight: '1px solid rgba(255,255,255,0.15)' }}>📬 File Complaint</a>
+          <a href="/file-complaint" style={{ fontSize: '0.68rem', color: '#c8d4e8', fontFamily: 'Arial', textDecoration: 'none', padding: '0 0.5rem', borderRight: '1px solid rgba(255,255,255,0.15)' }}>File Complaint</a>
           <a href="/my-complaints" style={{ fontSize: '0.68rem', color: '#94a3b8', fontFamily: 'Arial', textDecoration: 'none' }}>Track Status</a>
         </div>
       </div>
