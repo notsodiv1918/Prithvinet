@@ -5,6 +5,7 @@ import CitizenPollutionMap, { MapStation } from '@/components/CitizenPollutionMa
 import LocationDetailsCard, { Precaution } from '@/components/LocationDetailsCard';
 import PollutionMetrics, { Metric } from '@/components/PollutionMetrics';
 import { AIR_STATIONS, airColor, airRadius } from '@/data/citizenMapData';
+import CitizenAIWidget from '@/components/CitizenAIWidget';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function aqiLabel(aqi: number) {

@@ -90,8 +90,9 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
             {tab.label}
           </a>
         ))}
-        <div style={{ marginLeft: 'auto', fontSize: '0.65rem', color: '#94a3b8', fontFamily: 'Arial' }}>
-          Maharashtra State Pollution Control Board
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <a href="/file-complaint" style={{ fontSize: '0.68rem', color: '#c8d4e8', fontFamily: 'Arial', textDecoration: 'none', padding: '0 0.5rem', borderRight: '1px solid rgba(255,255,255,0.15)' }}>📬 File Complaint</a>
+          <a href="/my-complaints" style={{ fontSize: '0.68rem', color: '#94a3b8', fontFamily: 'Arial', textDecoration: 'none' }}>Track Status</a>
         </div>
       </div>
 

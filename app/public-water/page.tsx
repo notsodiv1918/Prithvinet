@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import CitizenPageHeader from '@/components/CitizenPageHeader';
+import CitizenAIWidget from '@/components/CitizenAIWidget';
 import CitizenPollutionMap, { MapStation } from '@/components/CitizenPollutionMap';
 import LocationDetailsCard, { Precaution } from '@/components/LocationDetailsCard';
 import PollutionMetrics, { Metric } from '@/components/PollutionMetrics';
@@ -218,5 +219,8 @@ export default function PublicWaterPage() {
         </div>
       </div>
     </div>
+    <CitizenAIWidget />
+  </div>
+  </div>
   );
 }
