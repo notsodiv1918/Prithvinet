@@ -40,7 +40,7 @@ export default function GovHeader() {
     { href: '/industry-reports',   label: 'Reports',     icon: '☰' },
     { href: '/industry-forecast',  label: 'Forecast',    icon: '◈' },
     { href: '/industry-alerts',    label: 'Alerts',      icon: '⚐' },
-    { href: '/copilot',            label: 'AI Copilot',  icon: '🤖' },
+    { href: '/copilot',            label: 'AI Copilot',  icon: '⬡' },
   ] : [
     { href: '/dashboard',          label: 'Dashboard',   icon: '⊞' },
     { href: '/map',                label: 'Map',          icon: '◎' },
@@ -48,12 +48,12 @@ export default function GovHeader() {
     { href: '/reports',            label: 'Reports',      icon: '☰' },
     { href: '/forecast',           label: 'Forecast',     icon: '◈' },
     { href: '/chat',               label: 'Messages',     icon: '✉' },
-    { href: '/copilot',            label: 'AI Copilot',   icon: '🤖' },
-    { href: '/risk-scores',        label: 'Risk',         icon: '⚡' },
-    { href: '/escalations',        label: 'Escalations',  icon: '📋' },
-    { href: '/alert-rules',        label: 'Alert Rules',  icon: '🔔' },
-    { href: '/compliance-calendar',label: 'Calendar',     icon: '📅' },
-    { href: '/complaints',         label: 'Complaints',   icon: '📬' },
+    { href: '/copilot',            label: 'AI Copilot',   icon: '⬡' },
+    { href: '/risk-scores',        label: 'Risk',         icon: '◇' },
+    { href: '/escalations',        label: 'Escalations',  icon: '⇑' },
+    { href: '/alert-rules',        label: 'Alert Rules',  icon: '⚐' },
+    { href: '/compliance-calendar',label: 'Calendar',     icon: '▦' },
+    { href: '/complaints',         label: 'Complaints',   icon: '✆' },
   ];
 
   const tickerFull = [...NEWS_ITEMS, ...NEWS_ITEMS].join('   ◆   ');

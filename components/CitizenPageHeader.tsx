@@ -69,7 +69,7 @@ export default function CitizenPageHeader({ activeTab, stationCount }: Props) {
             <div style={{ fontSize: '0.58rem', color: '#94a3b8' }}>{stationCount} stations active</div>
           </div>
           <a href="/" style={{ background: '#1a2744', color: 'white', fontSize: '0.7rem', fontFamily: 'Arial', fontWeight: '600', padding: '0.35rem 0.8rem', borderRadius: '3px', textDecoration: 'none', flexShrink: 0 }}>
-            🔐 Staff Login
+            ⊞ Staff Login
           </a>
         </div>
       </div>

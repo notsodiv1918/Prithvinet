@@ -55,7 +55,7 @@ export default function CitizenAIWidget() {
       // Show a simplified setup message — don't expose internal details
       setMsgs(prev => [...prev, {
         role: 'assistant',
-        content: '⚙️ The AI assistant is not yet configured by the administrator. Please try again later.\n\nFor urgent help: MPCB Helpline 1800-233-3535 (Toll Free)',
+        content: ' The AI assistant is not yet configured by the administrator. Please try again later.\n\nFor urgent help: MPCB Helpline 1800-233-3535 (Toll Free)',
       }]);
     } else if (result.error) {
       setMsgs(prev => [...prev, { role: 'assistant', content: FALLBACK_CITIZEN }]);
