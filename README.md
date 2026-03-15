@@ -143,11 +143,39 @@ Mumbai (Andheri, Bandra), Pune, Nagpur, Nashik, Aurangabad, Thane, Kolhapur, Sol
 
 ## Sample Demo Flow (Hackathon)
 
-1. Login as **Regional Officer** → See 3 active breaches on dashboard
-2. Go to **Pollution Map** → Nagpur station glows red
-3. Go to **Alerts** → Bharat Steel breaching SO₂ at 142 ppm → Click Escalate
-4. Go to **Forecast** → 72-hr AQI prediction with confidence band
-5. Go to **Reports** → 67% compliance rate across industries
+1. Login as Regional Officer → See 3 active breaches on dashboard
+2. Go to Pollution Map → Nagpur station glows red
+3. Go to Alerts → Bharat Steel breaching SO₂ at 142 ppm → Click Escalate
+4. Go to Forecast → 72-hr AQI prediction with confidence band
+5. Go to Reports → 67% compliance rate across industries
+
+---
+
+## My Contributions
+
+- Designed the overall product architecture and multi-role system (Super Admin, Regional Officer, Industry User, Citizen).
+- Implemented the real-time environmental monitoring dashboard with AQI, SO₂, NO₂, and PM2.5 visualizations.
+- Built the interactive geo-spatial pollution heatmap using React-Leaflet for station monitoring.
+- Developed the automated compliance and alert system for pollution threshold breaches.
+- Implemented the 72-hour AQI forecast visualization with confidence intervals.
+- Designed the citizen transparency portal for public AQI access and health advisories.
+- Created the responsive UI design system using Tailwind CSS for dashboards and data visualization.
+
+---
+
+## Future Improvements
+
+- Integration with real MPCB APIs for live environmental data
+- Machine learning models for advanced AQI prediction
+- SMS/WhatsApp notification system for regulatory alerts
+- IoT sensor integration for automated monitoring
+- Historical pollution analytics dashboard
+
+---
+
+## License
+
+Built for educational/hackathon purposes.
 
 ---
 
