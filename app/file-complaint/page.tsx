@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import CitizenPageHeader from '@/components/CitizenPageHeader';
 import CitizenAIWidget from '@/components/CitizenAIWidget';
 import { addComplaint, ComplaintCategory } from '@/lib/complaintStore';
@@ -8,31 +8,53 @@ import { generateComplaintPDF } from '@/lib/pdfUtils';
 const CATEGORIES: ComplaintCategory[] = ['Air Pollution','Water Pollution','Noise Pollution','Illegal Dumping','Other'];
 const DISTRICTS = ['Mumbai','Pune','Nagpur','Thane','Nashik','Aurangabad','Solapur','Kolhapur','Amravati','Navi Mumbai','Ratnagiri','Chandrapur','Latur','Akola','Yavatmal','Jalgaon','Gondia','Satara','Osmanabad'];
 
-interface FormState {
-  name: string; anonymous: boolean; email: string;
-  category: ComplaintCategory; district: string;
-  location: string; description: string;
-  photoBase64: string; photoName: string;
-  datetime: string;
-}
+const inp: React.CSSProperties = { width:'100%', border:'1.5px solid #dde2ec', borderRadius:'6px', padding:'0.5rem 0.75rem', fontSize:'0.875rem', fontFamily:'Arial', background:'#f8f9fa', outline:'none', boxSizing:'border-box', color:'#1a2744' };
+
+const F = memo(({ label, error, children }: { label:string; error?:string; children:React.ReactNode }) => (
+  <div style={{ marginBottom:'1rem' }}>
+    <label style={{ display:'block', fontSize:'0.7rem', fontWeight:'700', color:'#3d4f6b', fontFamily:'Arial', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.3rem' }}>{label}</label>
+    {children}
+    {error && <div style={{ fontSize:'0.67rem', color:'#c0392b', fontFamily:'Arial', marginTop:'0.2rem' }}>{error}</div>}
+  </div>
+));
+F.displayName = 'F';
 
 export default function FileComplaintPage() {
-  const [form, setForm] = useState<FormState>({
-    name:'', anonymous:false, email:'', category:'Air Pollution',
-    district:'', location:'', description:'', photoBase64:'', photoName:'',
-    datetime: new Date().toISOString().slice(0,16),
-  });
+  const [name,        setName]        = useState('');
+  const [anonymous,   setAnonymous]   = useState(false);
+  const [email,       setEmail]       = useState('');
+  const [category,    setCategory]    = useState<ComplaintCategory>('Air Pollution');
+  const [district,    setDistrict]    = useState('');
+  const [location,    setLocation]    = useState('');
+  const [description, setDescription] = useState('');
+  const [datetime,    setDatetime]    = useState(new Date().toISOString().slice(0,16));
+  const [photoBase64, setPhotoBase64] = useState('');
+  const [photoName,   setPhotoName]   = useState('');
+
   const [submitted, setSubmitted] = useState<{refNo:string;email:string}|null>(null);
   const [loading,   setLoading]   = useState(false);
   const [errors,    setErrors]    = useState<Record<string,string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const handleName        = useCallback((e: React.ChangeEvent<HTMLInputElement>)   => setName(e.target.value),        []);
+  const handleEmail       = useCallback((e: React.ChangeEvent<HTMLInputElement>)   => setEmail(e.target.value),       []);
+  const handleLocation    = useCallback((e: React.ChangeEvent<HTMLInputElement>)   => setLocation(e.target.value),    []);
+  const handleDescription = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>)=> setDescription(e.target.value), []);
+  const handleDatetime    = useCallback((e: React.ChangeEvent<HTMLInputElement>)   => setDatetime(e.target.value),    []);
+  const handleCategory    = useCallback((e: React.ChangeEvent<HTMLSelectElement>)  => setCategory(e.target.value as ComplaintCategory), []);
+  const handleDistrict    = useCallback((e: React.ChangeEvent<HTMLSelectElement>)  => setDistrict(e.target.value),   []);
+
+  const handleAnonymous = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setAnonymous(e.target.checked);
+    if (e.target.checked) setName('');
+  }, []);
+
   const validate = () => {
     const e: Record<string,string> = {};
-    if (!form.anonymous && !form.name.trim()) e.name = 'Enter your name or choose Anonymous';
-    if (!form.district)                        e.district = 'Please select a district';
-    if (!form.location.trim())                 e.location = 'Describe the specific location';
-    if (form.description.trim().length < 20)   e.description = 'Please give more detail (min 20 characters)';
+    if (!anonymous && !name.trim()) e.name = 'Enter your name or choose Anonymous';
+    if (!district)                   e.district = 'Please select a district';
+    if (!location.trim())            e.location = 'Describe the specific location';
+    if (description.trim().length < 20) e.description = 'Please give more detail (min 20 characters)';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -42,8 +64,14 @@ export default function FileComplaintPage() {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { setErrors(prev => ({...prev, photo:'Photo must be under 2MB'})); return; }
     const reader = new FileReader();
-    reader.onload = ev => setForm(f => ({ ...f, photoBase64: ev.target?.result as string, photoName: file.name }));
+    reader.onload = ev => { setPhotoBase64(ev.target?.result as string); setPhotoName(file.name); };
     reader.readAsDataURL(file);
+  };
+
+  const resetForm = () => {
+    setName(''); setAnonymous(false); setEmail(''); setCategory('Air Pollution');
+    setDistrict(''); setLocation(''); setDescription(''); setPhotoBase64(''); setPhotoName('');
+    setDatetime(new Date().toISOString().slice(0,16));
   };
 
   const submit = async (ev: React.FormEvent) => {
@@ -51,38 +79,21 @@ export default function FileComplaintPage() {
     if (!validate()) return;
     setLoading(true);
     const complaint = addComplaint({
-      category:       form.category,
-      location:       form.location,
-      district:       form.district,
-      description:    form.description,
-      submittedBy:    form.anonymous ? 'Anonymous' : form.name.trim(),
-      submitterEmail: form.anonymous ? undefined : form.email.trim() || undefined,
-      photoBase64:    form.photoBase64 || undefined,
+      category, location, district, description,
+      submittedBy:    anonymous ? 'Anonymous' : name.trim(),
+      submitterEmail: anonymous ? undefined : email.trim() || undefined,
+      photoBase64:    photoBase64 || undefined,
     });
-    // Auto-generate and open complaint PDF in new tab
     await generateComplaintPDF({
-      refNo:          complaint.refNo,
-      category:       form.category,
-      district:       form.district,
-      location:       form.location,
-      description:    form.description,
-      submittedBy:    form.anonymous ? 'Anonymous' : form.name.trim(),
-      submitterEmail: form.anonymous ? undefined : form.email.trim() || undefined,
-      photoBase64:    form.photoBase64 || undefined,
-      datetime:       form.datetime,
+      refNo: complaint.refNo, category, district, location, description,
+      submittedBy:    anonymous ? 'Anonymous' : name.trim(),
+      submitterEmail: anonymous ? undefined : email.trim() || undefined,
+      photoBase64:    photoBase64 || undefined,
+      datetime,
     });
     setLoading(false);
-    setSubmitted({ refNo: complaint.refNo, email: form.email.trim() });
+    setSubmitted({ refNo: complaint.refNo, email: email.trim() });
   };
-
-  const inp: React.CSSProperties = { width:'100%', border:'1.5px solid #dde2ec', borderRadius:'6px', padding:'0.5rem 0.75rem', fontSize:'0.875rem', fontFamily:'Arial', background:'#f8f9fa', outline:'none', boxSizing:'border-box', color:'#1a2744' };
-  const F = ({ label, error, children }: { label:string; error?:string; children:React.ReactNode }) => (
-    <div style={{ marginBottom:'1rem' }}>
-      <label style={{ display:'block', fontSize:'0.7rem', fontWeight:'700', color:'#3d4f6b', fontFamily:'Arial', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.3rem' }}>{label}</label>
-      {children}
-      {error && <div style={{ fontSize:'0.67rem', color:'#c0392b', fontFamily:'Arial', marginTop:'0.2rem' }}>⚠ {error}</div>}
-    </div>
-  );
 
   return (
     <div style={{ minHeight:'100vh', background:'#f0f2f5', display:'flex', flexDirection:'column', fontFamily:'Arial' }}>
@@ -90,9 +101,8 @@ export default function FileComplaintPage() {
 
       <div style={{ maxWidth:'680px', margin:'0 auto', padding:'1.5rem', width:'100%' }}>
 
-        {/* Back link */}
         <div style={{ marginBottom:'1rem' }}>
-          <a href="/public" style={{ fontSize:'0.72rem', color:'#1a5280', fontFamily:'Arial', textDecoration:'none' }}>← Back to Air Quality Map</a>
+          <a href="/public" style={{ fontSize:'0.72rem', color:'#1a5280', fontFamily:'Arial', textDecoration:'none' }}>Back to Air Quality Map</a>
         </div>
 
         {/* Telegram option */}
@@ -113,9 +123,7 @@ export default function FileComplaintPage() {
         </div>
 
         {submitted ? (
-          /* ── Success screen ── */
           <div style={{ background:'white', borderRadius:'16px', padding:'2.5rem 2rem', textAlign:'center', boxShadow:'0 4px 20px rgba(26,39,68,0.1)' }}>
-            <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>✅</div>
             <div style={{ fontSize:'1.1rem', fontWeight:'700', color:'#1a6b3a', fontFamily:'Georgia', marginBottom:'0.5rem' }}>Complaint Submitted!</div>
             <div style={{ fontSize:'0.78rem', color:'#6b7a96', marginBottom:'1.25rem', lineHeight:1.7 }}>
               Your complaint has been received and routed to the concerned Regional Officer. You will be notified within 3 working days.
@@ -126,17 +134,14 @@ export default function FileComplaintPage() {
             </div>
             {submitted.email && (
               <div style={{ fontSize:'0.72rem', color:'#6b7a96', marginBottom:'1rem' }}>
-                Track your complaint at{' '}
-                <a href={`/my-complaints?email=${encodeURIComponent(submitted.email)}`} style={{ color:'#1a5280', fontWeight:'700' }}>
-                  My Complaints →
-                </a>
+                Track your complaint at <a href={`/my-complaints?email=${encodeURIComponent(submitted.email)}`} style={{ color:'#1a5280', fontWeight:'700' }}>My Complaints</a>
               </div>
             )}
             <div style={{ fontSize:'0.72rem', color:'#6b7a96', marginBottom:'1.5rem' }}>
               Save this reference number. For urgent issues: <strong>1800-233-3535</strong>
             </div>
             <div style={{ display:'flex', gap:'0.75rem', justifyContent:'center', flexWrap:'wrap' }}>
-              <button onClick={() => { setSubmitted(null); setForm({ name:'', anonymous:false, email:'', category:'Air Pollution', district:'', location:'', description:'', photoBase64:'', photoName:'', datetime:new Date().toISOString().slice(0,16) }); }}
+              <button onClick={() => { setSubmitted(null); resetForm(); }}
                 style={{ background:'#1a2744', color:'white', border:'none', borderRadius:'8px', padding:'0.6rem 1.25rem', fontSize:'0.82rem', cursor:'pointer', fontFamily:'Arial', fontWeight:'600' }}>
                 File Another
               </button>
@@ -145,7 +150,7 @@ export default function FileComplaintPage() {
               </a>
               {submitted.email && (
                 <a href={`/my-complaints?email=${encodeURIComponent(submitted.email)}`} style={{ background:'#e8f5ee', color:'#1a6b3a', border:'1.5px solid #c8e0d2', borderRadius:'8px', padding:'0.6rem 1.25rem', fontSize:'0.82rem', fontFamily:'Arial', fontWeight:'600', textDecoration:'none' }}>
-                  Track Status →
+                  Track Status
                 </a>
               )}
             </div>
@@ -153,7 +158,7 @@ export default function FileComplaintPage() {
         ) : (
           <>
             <div style={{ marginBottom:'1.25rem' }}>
-              <div style={{ fontSize:'1.2rem', fontWeight:'800', color:'#1a2744', fontFamily:'Georgia', marginBottom:'0.3rem' }}>📬 Report a Pollution Issue</div>
+              <div style={{ fontSize:'1.2rem', fontWeight:'800', color:'#1a2744', fontFamily:'Georgia', marginBottom:'0.3rem' }}>Report a Pollution Issue</div>
               <div style={{ fontSize:'0.75rem', color:'#6b7a96', lineHeight:1.7 }}>
                 Your complaint will be reviewed by a Regional Officer within 3 working days. All reports are confidential.
               </div>
@@ -162,32 +167,31 @@ export default function FileComplaintPage() {
             <div style={{ background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 2px 12px rgba(26,39,68,0.09)' }}>
               <form onSubmit={submit}>
 
-                {/* Name + anonymous */}
                 <F label="Your Name" error={errors.name}>
                   <div style={{ display:'flex', gap:'0.75rem', alignItems:'center' }}>
-                    <input type="text" placeholder="Your full name" value={form.name} onChange={e => setForm(f => ({...f,name:e.target.value}))} disabled={form.anonymous} style={{ ...inp, flex:1, opacity:form.anonymous?0.5:1 }} />
+                    <input type="text" placeholder="Your full name" value={name} onChange={handleName} disabled={anonymous} style={{ ...inp, flex:1, opacity:anonymous?0.5:1 }} />
                     <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.72rem', color:'#6b7a96', cursor:'pointer', whiteSpace:'nowrap', userSelect:'none' }}>
-                      <input type="checkbox" checked={form.anonymous} onChange={e => setForm(f => ({...f,anonymous:e.target.checked,name:e.target.checked?'':f.name}))} style={{ cursor:'pointer', width:'14px', height:'14px' }} />
+                      <input type="checkbox" checked={anonymous} onChange={handleAnonymous} style={{ cursor:'pointer', width:'14px', height:'14px' }} />
                       Stay Anonymous
                     </label>
                   </div>
                 </F>
 
-                {!form.anonymous && (
-                  <F label="Email (for tracking — optional)">
-                    <input type="email" placeholder="your@email.com" value={form.email} onChange={e => setForm(f => ({...f,email:e.target.value}))} style={inp} />
+                {!anonymous && (
+                  <F label="Email (for tracking - optional)">
+                    <input type="email" placeholder="your@email.com" value={email} onChange={handleEmail} style={inp} />
                     <div style={{ fontSize:'0.62rem', color:'#94a3b8', fontFamily:'Arial', marginTop:'0.15rem' }}>Used only to let you track your complaint status. Never shared.</div>
                   </F>
                 )}
 
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
                   <F label="Complaint Type" error={errors.category}>
-                    <select value={form.category} onChange={e => setForm(f => ({...f,category:e.target.value as ComplaintCategory}))} style={inp}>
+                    <select value={category} onChange={handleCategory} style={inp}>
                       {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                     </select>
                   </F>
                   <F label="District" error={errors.district}>
-                    <select value={form.district} onChange={e => setForm(f => ({...f,district:e.target.value}))} style={inp}>
+                    <select value={district} onChange={handleDistrict} style={inp}>
                       <option value="">-- Select District --</option>
                       {DISTRICTS.map(d => <option key={d}>{d}</option>)}
                     </select>
@@ -195,59 +199,54 @@ export default function FileComplaintPage() {
                 </div>
 
                 <F label="Exact Location" error={errors.location}>
-                  <input type="text" placeholder="e.g. Near Butibori MIDC gate, opposite petrol pump" value={form.location} onChange={e => setForm(f => ({...f,location:e.target.value}))} style={inp} />
+                  <input type="text" placeholder="e.g. Near Butibori MIDC gate, opposite petrol pump" value={location} onChange={handleLocation} style={inp} />
                 </F>
 
-                <F label="Date & Time of Incident">
-                  <input type="datetime-local" value={form.datetime} onChange={e => setForm(f => ({...f,datetime:e.target.value}))} style={{ ...inp, width:'auto' }} />
+                <F label="Date and Time of Incident">
+                  <input type="datetime-local" value={datetime} onChange={handleDatetime} style={{ ...inp, width:'auto' }} />
                 </F>
 
                 <F label="Description" error={errors.description}>
-                  <textarea rows={5} placeholder="Describe what you see, smell, or hear. Include how long it has been happening and any health impacts you've noticed…"
-                    value={form.description} onChange={e => setForm(f => ({...f,description:e.target.value}))}
+                  <textarea rows={5} placeholder="Describe what you see, smell, or hear. Include how long it has been happening and any health impacts..."
+                    value={description} onChange={handleDescription}
                     style={{ ...inp, resize:'vertical' }} />
-                  <div style={{ fontSize:'0.62rem', color:form.description.length<20?'#c0392b':'#94a3b8', fontFamily:'Arial', textAlign:'right', marginTop:'0.2rem' }}>
-                    {form.description.length} chars (min 20)
+                  <div style={{ fontSize:'0.62rem', color:description.length<20?'#c0392b':'#94a3b8', fontFamily:'Arial', textAlign:'right', marginTop:'0.2rem' }}>
+                    {description.length} chars (min 20)
                   </div>
                 </F>
 
-                {/* Photo upload */}
                 <F label="Photo Evidence (optional)" error={errors.photo}>
                   <div style={{ border:'2px dashed #dde2ec', borderRadius:'8px', padding:'1rem', textAlign:'center', cursor:'pointer', background:'#f8f9fa' }}
                     onClick={() => fileRef.current?.click()}>
-                    {form.photoBase64 ? (
+                    {photoBase64 ? (
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.75rem' }}>
-                        <img src={form.photoBase64} alt="preview" style={{ width:'60px', height:'60px', objectFit:'cover', borderRadius:'6px', border:'1px solid #dde2ec' }} />
+                        <img src={photoBase64} alt="preview" style={{ width:'60px', height:'60px', objectFit:'cover', borderRadius:'6px', border:'1px solid #dde2ec' }} />
                         <div style={{ textAlign:'left' }}>
-                          <div style={{ fontSize:'0.72rem', color:'#1a6b3a', fontWeight:'600', fontFamily:'Arial' }}>✓ {form.photoName}</div>
+                          <div style={{ fontSize:'0.72rem', color:'#1a6b3a', fontWeight:'600', fontFamily:'Arial' }}>{photoName}</div>
                           <div style={{ fontSize:'0.62rem', color:'#94a3b8', fontFamily:'Arial', marginTop:'0.1rem' }}>Click to change</div>
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <div style={{ fontSize:'1.5rem', marginBottom:'0.35rem' }}>📷</div>
-                        <div style={{ fontSize:'0.72rem', color:'#6b7a96', fontFamily:'Arial' }}>Click to upload a photo (max 2MB)</div>
-                      </>
+                      <div style={{ fontSize:'0.72rem', color:'#6b7a96', fontFamily:'Arial' }}>Click to upload a photo (max 2MB)</div>
                     )}
                   </div>
                   <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handlePhoto} />
                 </F>
 
                 <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:'6px', padding:'0.65rem 0.85rem', marginBottom:'1.25rem', fontSize:'0.7rem', color:'#92400e', lineHeight:1.7 }}>
-                  ⚠ Filing a false complaint is punishable under the Environment (Protection) Act, 1986. All submissions are reviewed by certified MPCB officers.
+                  Filing a false complaint is punishable under the Environment (Protection) Act, 1986. All submissions are reviewed by certified MPCB officers.
                 </div>
 
                 <button type="submit" disabled={loading} style={{ width:'100%', background:loading?'#94a3b8':'#1a2744', color:'white', border:'none', borderRadius:'8px', padding:'0.75rem', fontSize:'0.88rem', fontFamily:'Arial', fontWeight:'700', cursor:loading?'not-allowed':'pointer', transition:'background 0.15s' }}>
-                  {loading ? '⏳ Submitting…' : '📬 Submit Complaint'}
+                  {loading ? 'Submitting...' : 'Submit Complaint'}
                 </button>
               </form>
             </div>
 
-            {/* Emergency contacts */}
             <div style={{ marginTop:'1rem', background:'white', borderRadius:'10px', padding:'1rem 1.25rem', boxShadow:'0 1px 6px rgba(26,39,68,0.07)' }}>
-              <div style={{ fontSize:'0.7rem', fontWeight:'700', color:'#1a2744', marginBottom:'0.35rem' }}>📞 Other ways to report:</div>
+              <div style={{ fontSize:'0.7rem', fontWeight:'700', color:'#1a2744', marginBottom:'0.35rem' }}>Other ways to report:</div>
               <div style={{ fontSize:'0.7rem', color:'#6b7a96', lineHeight:1.8 }}>
-                MPCB Toll Free: <strong>1800-233-3535</strong> &nbsp;·&nbsp; Police: <strong>100</strong> &nbsp;·&nbsp; Email: <strong>helpdesk@mpcb.gov.in</strong>
+                MPCB Toll Free: <strong>1800-233-3535</strong> &nbsp; Police: <strong>100</strong> &nbsp; Email: <strong>helpdesk@mpcb.gov.in</strong>
               </div>
             </div>
           </>
