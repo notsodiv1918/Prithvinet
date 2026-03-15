@@ -154,4 +154,3 @@ Mumbai (Andheri, Bandra), Pune, Nagpur, Nashik, Aurangabad, Thane, Kolhapur, Sol
 ## License
 
 Built for educational/hackathon purposes.
-Maharashtra State Pollution Control Board · PrithviNet © 2024
